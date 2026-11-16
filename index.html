@@ -8,9 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#edf2ea;--card:#fff;--ink:#1c2620;--muted:#56645b;--line:#d6e0d2;--accent:#2f6b3f;--accent-soft:#dcebdc;--sale:#c93a2a;--sale-soft:#fbe4df;--warn-ink:#9c2618;--butter:#f5c542;--butter-ink:#3a2c00;--r:14px;
+:root{--bg:#edf2ea;--card:#fff;--ink:#1c2620;--muted:#56645b;--line:#d6e0d2;--accent:#2f6b3f;--accent-soft:#dcebdc;--sale:#c93a2a;--sale-soft:#fbe4df;--warn-ink:#9c2618;--on-accent:#fff;--on-sale:#fff;--butter:#f5c542;--butter-ink:#3a2c00;--r:14px;
   --display:"Bricolage Grotesque",ui-rounded,system-ui,sans-serif;--body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-@media (prefers-color-scheme:dark){:root{--bg:#121a15;--card:#1b261f;--ink:#e9efe8;--muted:#a4b3a8;--line:#2c3a31;--accent:#7fcb92;--accent-soft:#1f3527;--sale:#ff8a75;--sale-soft:#3d1f1a;--warn-ink:#ffb3a5;--butter:#f5c542;--butter-ink:#3a2c00}}
+@media (prefers-color-scheme:dark){:root{--bg:#121a15;--card:#1b261f;--ink:#e9efe8;--muted:#a4b3a8;--line:#2c3a31;--accent:#7fcb92;--accent-soft:#1f3527;--sale:#ff8a75;--sale-soft:#3d1f1a;--warn-ink:#ffb3a5;--on-accent:#10241a;--on-sale:#2a0d08;--butter:#f5c542;--butter-ink:#3a2c00}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 var(--body)}
@@ -99,7 +99,7 @@ tr.pantry td{color:var(--muted)}
 ol{padding-left:22px}ol li{margin:6px 0}
 #priceTable th:first-child{width:52%}#priceTable th:nth-child(2){width:24%}
 #priceTable input{min-height:36px;padding:6px;text-align:right}
-.btn{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:12px;font-weight:700;padding:9px 14px;cursor:pointer;min-height:42px}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);border-radius:12px;font-weight:700;padding:9px 14px;cursor:pointer;min-height:42px}
 .btn.ghost{background:transparent;color:var(--accent)}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .status{font-size:.88rem;margin-top:10px;color:var(--muted)}.status.bad{color:var(--sale)}
@@ -134,7 +134,7 @@ ol.steps{list-style:none;padding:0;margin:0}
 .step .when{display:block;font-size:.84rem;color:var(--accent);margin-top:4px}
 .step.done{background:var(--accent-soft)}.step.done .txt{color:var(--muted)}.step.done .txt>:first-child{}
 .timer{margin:8px 0 0 50px;border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:999px;padding:6px 12px;font-size:.85rem;cursor:pointer;min-height:36px}
-.timer.ring{background:var(--sale);border-color:var(--sale);color:#fff}
+.timer.ring{background:var(--sale);border-color:var(--sale);color:var(--on-sale)}
 .note.ok{color:var(--accent);font-weight:600}
 .note.warn{color:var(--warn-ink);background:var(--sale-soft);font-weight:600}
 #snapRow label:has(input:checked){background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
@@ -187,7 +187,7 @@ nav.tabs button{font-size:.8rem}
 .allergyrow fieldset{border:0;padding:0;margin:0}
 .allergyrow legend{font-weight:700;padding:0}
 #allergyRow input:checked+*,#allergyRow label:has(input:checked){background:var(--sale-soft);border-color:var(--sale);color:var(--sale)}
-#toast{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto;background:var(--sale);color:#fff;border-radius:12px;padding:12px 14px;z-index:60;font-weight:700}
+#toast{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto;background:var(--sale);color:var(--on-sale);border-radius:12px;padding:12px 14px;z-index:60;font-weight:700}
 .morebox{grid-column:1/-1;text-align:center;padding:8px 0}
 .swap{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.85rem}
 .swap span{font-weight:700;color:var(--accent)}
@@ -223,7 +223,7 @@ nav.tabs button{font-size:.8rem}
 .cktools{display:flex;flex-wrap:wrap;justify-content:center;gap:18px;margin-top:10px}
 .cktools .link{min-height:44px}
 #cookWake{text-align:center;margin:4px 0 0}
-.cktimer.ring,.timer.ring{background:var(--sale);border-color:var(--sale);color:#fff}
+.cktimer.ring,.timer.ring{background:var(--sale);border-color:var(--sale);color:var(--on-sale)}
 @media (prefers-reduced-motion:no-preference){.cktimer.ring{animation:pulse 1s ease-in-out infinite}}
 @keyframes pulse{50%{transform:scale(1.03)}}
 #planSheet{position:fixed;inset:0;background:rgba(0,0,0,.45);overflow:auto;z-index:30;padding:24px 10px}
@@ -255,8 +255,8 @@ nav.tabs button{font-size:.74rem;padding:12px 2px}
 .fav.big{font-size:1.6rem}
 .dhead{display:flex;justify-content:space-between;align-items:center;gap:8px}.dhead h2{margin:12px 0 4px}
 .searchrow{margin:8px 0 0}.searchrow input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);min-height:46px}
-.pickbanner{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--accent);color:#fff;border-radius:12px;padding:10px 12px;margin:6px 0;font-size:.9rem;font-weight:600}
-.pickbanner .btn{border-color:#fff;color:#fff;min-height:34px;padding:4px 12px}
+.pickbanner{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--accent);color:var(--on-accent);border-radius:12px;padding:10px 12px;margin:6px 0;font-size:.9rem;font-weight:600}
+.pickbanner .btn{border-color:var(--on-accent);color:var(--on-accent);min-height:34px;padding:4px 12px}
 .btn.addpick{margin-top:10px;width:100%}
 .storeswitch{margin:8px 4px 0;font-size:.9rem}.storeswitch select{width:auto;min-height:36px;padding:4px 8px;margin-left:6px;font-weight:600}
 .mystore{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin:6px 0}
@@ -273,7 +273,7 @@ details.adv{margin:12px 4px;font-size:.9rem}details.adv summary{color:var(--mute
 .seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
 .methods{flex-wrap:wrap;display:inline-flex;border:1px solid var(--line);border-radius:22px;padding:3px;margin:6px 0 2px;background:var(--bg)}
 .meth{border:0;background:none;padding:8px 13px;border-radius:999px;font-weight:600;color:var(--muted);cursor:pointer;min-height:38px}
-.meth.on{background:var(--accent);color:#fff}
+.meth.on{background:var(--accent);color:var(--on-accent)}
 footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
 </style>
 </head>
@@ -1188,7 +1188,7 @@ if (typeof module !== "undefined") module.exports = globalThis.MEAL_MATTERS_DATA
         ["Set up the grill for two zones, high heat on one side and none on the other. Aim for about 375 to 400°F with the lid closed.", "Grill holds about 375 to 400°F with one side unlit.", 0],
         ["Cut the potatoes into chunks and the onion into wedges. Toss with half the oil, salt and pepper and seal them in a heavy-duty foil packet.", "Packet is sealed tight with the vegetables in one layer.", 0],
         ["Rub the chicken with the rest of the oil, paprika, minced garlic, salt and pepper.", "Each leg is coated on all sides.", 0],
-        ["Grill the chicken skin side up on the unlit side with the lid closed, and the potato packet over the heat, flipping the packet halfway. Move the chicken over the heat for the last few minutes to crisp the skin.", "Skin is golden and crisp, the thickest leg reads 175°F near the bone, and the potatoes are tender.", 45],
+        ["Grill the chicken skin side up on the unlit side with the lid closed, and the potato packet over the heat, flipping it halfway and sliding it to the cool side if it starts to scorch. Move the chicken over the heat for the last few minutes to crisp the skin.", "Skin is golden and crisp, the thickest leg reads 175°F near the bone, and the potatoes are tender.", 45],
         ["Squeeze the lemon over everything before serving.", "Lemon is squeezed over everything.", 0]]),
       smoker: V(["smoker"], 100, [
         ["Heat the smoker to 275°F.", "Smoker holds steady at 275°F.", 0],
@@ -1210,22 +1210,22 @@ if (typeof module !== "undefined") module.exports = globalThis.MEAL_MATTERS_DATA
         ["Smoke the salmon about 1 hour, until it flakes easily. Steam the broccoli for the last 5 minutes.", "Salmon flakes with a fork and reads 145°F, and the broccoli is bright green and tender.", 60]]),
     },
     "steak-potatoes": {
-      grill: V(["grill"], 35, [
+      grill: V(["grill"], 40, [
         ["Cut the potatoes small, toss with half the oil, salt and pepper, and seal in a heavy-duty foil packet. Grill over medium heat with the lid closed, turning once.", "A fork slides through the potatoes.", 25],
         ["Season the steak well and let it sit while the potatoes cook.", "Steak surface looks dry and it has reached room temperature.", 0],
         ["Brush the steak with the rest of the oil and grill over high heat, about 4 minutes per side for medium-rare.", "Grill marks form, and the center reads 130 to 135°F for medium-rare (USDA recommends 145°F).", 8],
         ["Melt the butter with the garlic in a small foil pan at the edge of the grill and spoon it over the steak. Rest 5 minutes before slicing.", "Steak has rested 5 minutes and the juices stay on the board when sliced.", 5]]),
-      campfire: V(["campfire"], 40, [
+      campfire: V(["campfire"], 45, [
         ["Cut the potatoes small, toss with half the oil, salt and pepper, and seal in a double layer of heavy-duty foil. Set the packet on hot coals at the edge of the fire, turning it every 10 minutes with tongs.", "A fork slides through the potatoes.", 30],
         ["Season the steak well and let it sit while the potatoes cook.", "Steak surface looks dry and it has reached room temperature.", 0],
-        ["Brush the steak with the rest of the oil and cook on a grate over hot coals, about 4 to 5 minutes per side for medium-rare.", "Dark crust forms, and the center reads 130 to 135°F for medium-rare (USDA recommends 145°F).", 9],
+        ["Brush the steak with the rest of the oil and cook on a grate over hot coals, about 4 to 5 minutes per side for medium-rare. The coals are hot enough when you can only hold your hand above the grate for about 4 seconds.", "Dark crust forms, and the center reads 130 to 135°F for medium-rare (USDA recommends 145°F).", 9],
         ["Top the steak with the butter and minced garlic and let it melt while the steak rests 5 minutes before slicing.", "Steak has rested 5 minutes and the juices stay on the board when sliced.", 5]]),
     },
     "pork-chops-apples": {
-      grill: V(["grill"], 22, [
-        ["Season the chops with salt and pepper. Heat the grill to medium-high.", "Both sides are seasoned and the grill is hot.", 0],
+      grill: V(["grill"], 14, [
+        ["Season the chops with salt and pepper. Heat the grill to medium-high. Put the sliced apples and onion on heavy-duty foil with the butter, fold it into a packet and set it on the grill.", "Chops are seasoned and the apple packet is on the hot grill.", 0],
         ["Grill the chops with the lid closed about 4 to 5 minutes per side, until they reach 145°F. Rest them on a plate.", "Chops have grill marks and read 145°F in the center. Rest them 3 minutes.", 9],
-        ["Put the sliced apples and onion on heavy-duty foil with the butter, fold it into a packet and grill until soft.", "Apples are soft and the onion is tender.", 12],
+        ["Leave the apple packet on while the chops rest, until the apples are soft.", "Apples are soft and the onion is tender.", 3],
         ["Open the packet, stir in the brown sugar and cinnamon, and spoon it over the chops.", "Sugar has melted into a glaze over the apples.", 0]]),
     },
     "chicken-romaine-salad": {
@@ -1242,15 +1242,15 @@ if (typeof module !== "undefined") module.exports = globalThis.MEAL_MATTERS_DATA
         ["Grill the chicken over medium-high heat, flipping once, about 15 to 20 minutes while the sweet potatoes finish.", "Chicken reads 165°F in the thickest part and the sweet potatoes are tender.", 18]]),
     },
     "loaded-baked-potatoes": {
-      grill: V(["grill"], 60, [
+      grill: V(["grill"], 70, [
         ["Heat the grill to about 400°F. Scrub the potatoes, prick them, rub with salt and wrap each one in foil.", "Grill is hot and each potato is wrapped.", 0],
         ["Grill with the lid closed about an hour, turning every 15 minutes, until soft.", "A fork slides in with no resistance.", 60],
-        ["Cook the bacon in a cast-iron pan on the grill and crumble it.", "Bacon is crisp and crumbles easily.", 8],
+        ["Cook the bacon in a cast-iron pan on the grill over medium heat and crumble it. Bacon grease can flare up: keep the lid open and never pour grease onto the flames.", "Bacon is crisp and crumbles easily.", 8],
         ["Split the potatoes and top with butter, shredded cheddar, sour cream, bacon and sliced green onions.", "Each potato is split and topped.", 0]]),
-      campfire: V(["campfire"], 55, [
+      campfire: V(["campfire"], 60, [
         ["Scrub the potatoes, prick them, rub with salt and wrap each in a double layer of heavy-duty foil.", "Each potato is wrapped twice.", 0],
         ["Nestle them in hot coals, not flames, and cook 45 to 60 minutes, turning every 15 minutes with tongs.", "A fork slides through the foil and potato with no resistance.", 50],
-        ["Cook the bacon in a cast-iron pan on a grate over the fire and crumble it.", "Bacon is crisp and crumbles easily.", 8],
+        ["Cook the bacon in a cast-iron pan on a grate over coals, not open flame, and crumble it. Never pour the grease into the fire.", "Bacon is crisp and crumbles easily.", 8],
         ["Split the potatoes and top with butter, shredded cheddar, sour cream, bacon and sliced green onions.", "Each potato is split and topped.", 0]]),
     },
     "baked-apples": {
@@ -1320,11 +1320,11 @@ if (typeof module !== "undefined") module.exports = globalThis.MEAL_MATTERS_DATA
         ["Fill the tortillas with potatoes, eggs, bacon and shredded cheddar and roll tightly.", "Each burrito is rolled tight with the ends tucked in.", 0],
         ["Wrap each one in foil. They keep 4 days in the fridge or 3 months frozen.", "Each burrito is wrapped and labeled with the date.", 0]]),
       campfire: V(["campfire"], 30, [
-        ["Cook the bacon in a cast-iron skillet on the camp stove or a grate over the fire until crisp, then chop it.", "Bacon is crisp and drained on paper towel.", 8],
+        ["Cook the bacon in a cast-iron skillet on the camp stove or a grate over coals, not open flame, until crisp, then chop it. Never pour the grease into the fire.", "Bacon is crisp and drained on paper towel.", 8],
         ["Fry the diced potatoes and onion in the oil in the same skillet, covered, until browned and tender.", "Potatoes are browned and a fork slides through.", 15],
         ["Scramble the eggs with salt and pepper over low heat.", "No liquid egg remains, but the eggs still look moist.", 4],
         ["Fill the tortillas with potatoes, eggs, bacon and shredded cheddar and roll tightly.", "Each burrito is rolled tight with the ends tucked in.", 0],
-        ["Wrap each one in foil and warm at the edge of the fire for a few minutes before eating.", "Each burrito is wrapped and warm all the way through.", 3]]),
+        ["Wrap each one in foil and warm at the edge of the fire for a few minutes before eating. Leftovers keep 4 days in the fridge or 3 months frozen; reheat cold ones until hot all the way through (165°F).", "Each burrito is wrapped and warm all the way through.", 3]]),
     },
     "beef-chili": {
       campfire: V(["campfire"], 50, [
@@ -3142,11 +3142,11 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   // Words in an imported recipe line. Alcohol is never SNAP-eligible; the rest depend on the state.
   const RAW = [
     { re: /\b(wine|beer|ale|ipa|lager|stout|porter|guinness|hard (?:apple )?cider|hard seltzer|mead|bourbon|whiske?y|scotch|rum|vodka|tequila|mezcal|gin|brandy|cognac|sherry|port|vermouth|liqueur|schnapps|champagne|prosecco|sangria|sake|soju|ouzo|absinthe|limoncello|kahl[uú]a|amaretto|marsala|vin santo|bailey'?s|grand marnier|triple sec|cointreau|frangelico|j[aä]germeister|chardonnay|merlot|cabernet|pinot (?:noir|grigio|gris)|riesling|sauvignon blanc|moscato|zinfandel|bud light|budweiser|corona|coors|heineken|modelo|miller lite|white claw|jack daniel'?s|jameson|fireball|smirnoff|bacardi|captain morgan|hennessy|tito'?s)\b/i,
-      safe: /\b(cooking wine|cooking sherry|(?:red |white |rice |sherry |champagne |cider |apple cider |malt |ale )?(?:wine )?vinegar|ginger ale|ginger beer|root beer|(?:rum|brandy|sherry|bourbon) extract|bourbon vanilla(?: beans?| extract| paste)?|madagascar bourbon|beer[- ]battered|beer bread(?: mix)?|wine[- ]braised|rum raisins?|champagne (?:grapes|mangoe?s?)|port[- ]salut|port wine (?:cheese|jelly)|for (?:\w+'?s )?sake|corona (?:beans?|squash))\b/gi, cats: ["alcohol"], sure: true },
-    { re: /\b(soda|cola|coke|pepsi|soft drinks?|root beer|ginger ale|ginger beer|sprite|7[- ]?up|dr\.? ?pepper|mountain dew|fanta|canada dry|a&w)\b/i, safe: /\b(baking soda|bicarb(?:onate)?(?: of)? soda|soda water|club soda|soda bread|soda crackers)\b/gi, cats: ["soda", "sweetDrinks", "unhealthyDrinks"], sure: true },
+      safe: /\b(scotch bonnets?(?: peppers?)?|scotch eggs?|butterscotch|bailey'?s (?:coffee )?creamer|atomic fireballs?|(?:jack daniel'?s|bourbon|whiske?y|beer) (?:barbecue|bbq|grilling) sauce|bourbon barrel[- ]aged|beer cheese(?: dip| soup)?|(?:\w+ ){1,2}grapes|cooking wine|cooking sherry|(?:red |white |rice |sherry |champagne |cider |apple cider |malt |ale )?(?:wine )?vinegar|ginger ale|ginger beer|root beer|(?:rum|brandy|sherry|bourbon) extract|bourbon vanilla(?: beans?| extract| paste)?|madagascar bourbon|beer[- ]battered|beer bread(?: mix)?|wine[- ]braised|rum raisins?|champagne (?:grapes|mangoe?s?)|port[- ]salut|port wine (?:cheese|jelly)|for (?:\w+(?:'s|s'|')? ){1,3}sake|(?:the )?sake of|corona (?:beans?|squash))\b/gi, cats: ["alcohol"], sure: true },
+    { re: /\b(soda|cola|coke|pepsi|soft drinks?|root beer|ginger ale|ginger beer|sprite|7[- ]?up|dr\.? ?pepper|mountain dew|fanta|canada dry|a&w)\b/i, safe: /\b(canada dry (?:club soda|seltzer)|baking soda|bicarb(?:onate)?(?: of)? soda|soda water|club soda|soda bread|soda crackers)\b/gi, cats: ["soda", "sweetDrinks", "unhealthyDrinks"], sure: true },
     { re: /\b(energy drinks?|red bull|monster energy)\b/i, cats: ["energy", "sweetDrinks", "unhealthyDrinks"], sure: true },
     { re: /\b(lemonade|fruit punch|hawaiian punch|sweet tea|juice drink|kool[- ]?aid|sports drink|gatorade)\b/i, cats: ["sweetDrinks", "juiceDrinks", "unhealthyDrinks"], sure: false },
-    { re: /\b(candy|candies|candy bars?|gumm(?:y|ies)|jelly beans|m&m'?s|marshmallows?|toffee|caramels|peppermints|(?:chocolate|choc|butterscotch|peanut butter|white chocolate) (?:chips?|morsels)|semi-?sweet morsels|chocolate (?:bars?|candies|kisses)|hershey(?:'?s)?(?: bars?| kisses)?|reese'?s|snickers|kit ?kats?|butterfinger|heath bars?|skittles|starburst|twix|milky way|sprinkles|jimmies)\b/i, cats: ["candy"], sure: false },
+    { re: /\b(candy|candies|candy bars?|gumm(?:y|ies)|jelly beans|m&m'?s|marshmallows?|toffee|caramels|peppermints|(?:chocolate|choc|butterscotch|peanut butter|white chocolate) (?:chips?|morsels)|semi-?sweet morsels|chocolate (?:bars?|candies|kisses)|hershey(?:'?s)? (?:bars?|kisses|milk chocolate)|atomic fireballs?|reese'?s|snickers|kit ?kats?|butterfinger|heath bars?|skittles|starburst|twix|milky way|sprinkles|jimmies)\b/i, cats: ["candy"], sure: false },
   ];
 
   // ZIP code prefix (first three digits) to state, from the USPS prefix allocation.
@@ -3232,7 +3232,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       return { ok: false, text: (sure ? "SNAP: this recipe has an ingredient SNAP doesn't cover" : "SNAP: this recipe may not be fully covered") + (name ? " in " + name : "") + ". " + whys.join(" ") };
     }
     const sensitive = recipe.i.some(([k]) => ITEM_CATS[k]);
-    if (rules.noSnap) return { ok: true, text: "SNAP: SNAP doesn't run in " + NO_SNAP[rules.state] + ", but every ingredient here is covered under the national SNAP rules." };
+    if (rules.noSnap) return { ok: true, text: "SNAP: not offered in " + NO_SNAP[rules.state] + ", but every ingredient here is covered under the national SNAP rules." };
     if (!name) return { ok: true, text: "SNAP: every ingredient here is covered under the national SNAP rules." + (sensitive ? " Some states count chocolate chips as candy, so add your ZIP code to check yours." : " Add your ZIP code to apply your state's rules too.") };
     return { ok: true, text: "SNAP: every ingredient here can be bought with SNAP in " + name + " under the rules USDA listed on " + fmtDay(AS_OF) + "." };
   }
@@ -3475,11 +3475,12 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
 
   // opts: { servings, maxMinutes, budget, diets[], allergens[], exclude (text), equipment (Set of owned),
   //         maxSkill, cuisines[], meals[], prepAheadOnly, saleOnly, sort }
-  // Outdoor gear, in the order the app prefers when more than one version fits.
+  // Outdoor gear, in display order; also the tie-break when two versions take the same time.
   const OUTDOOR_ORDER = ["grill", "griddle", "smoker", "campfire"];
-  // Outdoor versions of a recipe the user can cook with the gear they have.
+  // Outdoor versions of a recipe the user can cook with the gear they have, fastest first.
   function outdoorMethods(r, owned) {
-    return r.outdoor ? OUTDOOR_ORDER.filter(k => r.outdoor[k] && r.outdoor[k].equip.every(e => owned.has(e))) : [];
+    return r.outdoor ? OUTDOOR_ORDER.filter(k => r.outdoor[k] && r.outdoor[k].equip.every(e => owned.has(e)))
+      .sort((a, b) => r.outdoor[a].cook - r.outdoor[b].cook || OUTDOOR_ORDER.indexOf(a) - OUTDOOR_ORDER.indexOf(b)) : [];
   }
   function search(opts, ctx) {
     const owned = opts.equipment instanceof Set ? opts.equipment : new Set(opts.equipment || ["stovetop", "oven", "slow cooker", "air fryer", "toaster"]);
@@ -4211,6 +4212,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     if (!results.length) {
       list.innerHTML = $("#favOnly").checked && !Object.keys(state.favs).length
         ? '<p class="empty">No favorites yet. Tap ♡ on any recipe to save it here.</p>'
+        : opts.where === "outdoor" && !checked("equip").some(k => OUTDOOR_KEYS.includes(k)) ? '<p class="empty">Tick the outdoor gear you have under More filters to see outdoor recipes.</p>'
         : '<p class="empty">No recipes fit all of that. Try a bigger budget, more time, or fewer filters' + ($("#favOnly").checked ? ", or turn off Favorites only" : "") + ".</p>";
       return;
     }
@@ -5210,6 +5212,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     where: v => (["either", "indoor", "outdoor"].includes(v) ? v : "either"),
     weekBudget: v => (Number.isFinite(sNum(v)) && sNum(v) > 0 ? sNum(v) : ""),
   };
+  globalThis.MealMattersTest = Object.freeze({ SYNC_KEYS: SYNC_KEYS.slice(), sanitize: (k, v) => SANITIZE[k](v) });
   async function syncCall(method, code, body) {
     const b = serverBase(); if (b === null) throw new Error("Sync needs the Meal Matters server.");
     const r = await fetch(b + "/api/sync" + (code ? "/" + code : ""), { method, headers: body ? { "Content-Type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined });
@@ -5283,7 +5286,8 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   function whereHint() {
     const out = ($('input[name="where"]:checked') || {}).value === "outdoor", gear = checked("equip").filter(k => OUTDOOR_KEYS.includes(k));
     $("#whereHint").hidden = !out;
-    $("#whereHint").textContent = out ? (gear.length ? "Showing recipes with a version for your " + gear.map(k => ({ grill: "grill", griddle: "griddle", smoker: "smoker", campfire: "campfire or camp stove" })[k]).join(", ") + ". Change your gear under More filters." : "Tick the outdoor gear you have under More filters.") : "";
+    $("#whereHint").textContent = out ? (gear.length ? "Showing recipes with a version for your " + gear.map(k => ({ grill: "grill", griddle: "griddle", smoker: "smoker", campfire: "campfire or camp stove" })[k]).join(", ") + ". Change your gear under More filters." : "Tick the outdoor gear you have under More filters.") +
+      ($("#airOnly").checked ? " The air fryer filter doesn't apply outdoors." : "") : "";
   }
   // Picking Outdoors with no outdoor gear ticked would show nothing, so start with the grill, the most common.
   function whereChanged() {
