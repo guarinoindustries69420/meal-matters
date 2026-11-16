@@ -8,9 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#edf2ea;--card:#fff;--ink:#1c2620;--muted:#56645b;--line:#d6e0d2;--accent:#2f6b3f;--accent-soft:#dcebdc;--sale:#c93a2a;--sale-soft:#fbe4df;--butter:#f5c542;--butter-ink:#3a2c00;--r:14px;
+:root{--bg:#edf2ea;--card:#fff;--ink:#1c2620;--muted:#56645b;--line:#d6e0d2;--accent:#2f6b3f;--accent-soft:#dcebdc;--sale:#c93a2a;--sale-soft:#fbe4df;--warn-ink:#9c2618;--butter:#f5c542;--butter-ink:#3a2c00;--r:14px;
   --display:"Bricolage Grotesque",ui-rounded,system-ui,sans-serif;--body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-@media (prefers-color-scheme:dark){:root{--bg:#121a15;--card:#1b261f;--ink:#e9efe8;--muted:#a4b3a8;--line:#2c3a31;--accent:#7fcb92;--accent-soft:#1f3527;--sale:#ff8a75;--sale-soft:#3d1f1a;--butter:#f5c542;--butter-ink:#3a2c00}}
+@media (prefers-color-scheme:dark){:root{--bg:#121a15;--card:#1b261f;--ink:#e9efe8;--muted:#a4b3a8;--line:#2c3a31;--accent:#7fcb92;--accent-soft:#1f3527;--sale:#ff8a75;--sale-soft:#3d1f1a;--warn-ink:#ffb3a5;--butter:#f5c542;--butter-ink:#3a2c00}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 var(--body)}
@@ -136,6 +136,8 @@ ol.steps{list-style:none;padding:0;margin:0}
 .timer{margin:8px 0 0 50px;border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:999px;padding:6px 12px;font-size:.85rem;cursor:pointer;min-height:36px}
 .timer.ring{background:var(--sale);border-color:var(--sale);color:#fff}
 .note.ok{color:var(--accent);font-weight:600}
+.note.warn{color:var(--warn-ink);background:var(--sale-soft);font-weight:600}
+#snapRow label:has(input:checked){background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
 #splash{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto;overscroll-behavior:contain}#splash>*{margin-top:auto;margin-bottom:auto}
 #splashLogo{text-align:center;cursor:pointer;animation:fadein .6s ease}
 #splash.dark{background:#000}
@@ -2883,17 +2885,18 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   const STATE_NAMES = { AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado", CT: "Connecticut", DE: "Delaware", DC: "District of Columbia", FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", PR: "Puerto Rico", VI: "U.S. Virgin Islands", GU: "Guam" };
   // Category names used below: soda (soft drinks, carbonated), sweetDrinks (sweetened beverages, which include soda),
   // energy (energy drinks), juiceDrinks (fruit drinks under 50% juice), candy, desserts (prepared desserts).
-  const CAT_LABEL = { soda: "soda and soft drinks", sweetDrinks: "sweetened drinks", energy: "energy drinks", juiceDrinks: "fruit drinks with less than 50% juice", candy: "candy", desserts: "prepared desserts" };
+  // unhealthyDrinks is USDA's own vague wording for Arkansas and Missouri, so it never counts as a sure match.
+  const CAT_LABEL = { soda: "soda and soft drinks", sweetDrinks: "sweetened drinks", energy: "energy drinks", juiceDrinks: "fruit and vegetable drinks with less than 50% juice", unhealthyDrinks: "certain unhealthy drinks", candy: "candy", desserts: "prepared desserts" };
   // Each state's restrictions as listed by USDA, with the date each one starts.
   const WAIVERS = {
-    AR: [{ start: "2026-07-01", cats: ["soda", "juiceDrinks", "energy", "sweetDrinks", "candy"] }],
+    AR: [{ start: "2026-07-01", cats: ["soda", "juiceDrinks", "energy", "unhealthyDrinks", "candy"] }],
     FL: [{ start: "2026-04-20", cats: ["soda", "energy", "candy", "desserts"] }],
     HI: [{ start: "2027-04-01", cats: ["soda"] }],
     ID: [{ start: "2026-02-15", cats: ["soda", "candy"] }],
     IN: [{ start: "2026-01-01", cats: ["soda", "candy"] }],
     KS: [{ start: "2027-02-15", cats: ["candy", "soda"] }],
     LA: [{ start: "2026-02-18", cats: ["soda", "energy", "candy"] }],
-    MO: [{ start: "2027-02-15", cats: ["candy", "desserts", "sweetDrinks"] }],
+    MO: [{ start: "2027-02-15", cats: ["candy", "desserts", "unhealthyDrinks"] }],
     MT: [{ start: "2026-11-01", cats: ["sweetDrinks", "energy", "candy", "desserts"] }],
     NE: [{ start: "2026-12-01", cats: ["soda", "energy"] }, { start: "2027-03-01", cats: ["candy"] }],
     NV: [{ start: "2028-02-01", cats: ["candy", "sweetDrinks"] }],
@@ -2908,6 +2911,8 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   };
   // Approved, then vacated by a federal court; USDA says implementation may not proceed.
   const VACATED = ["CO", "IA", "TN", "WV"];
+  // Places that don't run SNAP (they have their own nutrition assistance programs).
+  const NO_SNAP = { PR: "Puerto Rico", AS: "American Samoa", MP: "the Northern Mariana Islands" };
 
   // Catalog items that could fall under a state category. sure:false means the state's own definition decides,
   // so the app says "may not be covered" rather than guessing. Everything else in the catalog is plain food.
@@ -2915,11 +2920,12 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
 
   // Words in an imported recipe line. Alcohol is never SNAP-eligible; the rest depend on the state.
   const RAW = [
-    { re: /\b(wine|beer|ale|lager|stout|bourbon|whiske?y|rum|vodka|tequila|gin|brandy|cognac|sherry|vermouth|liqueur|schnapps|champagne|prosecco|sake|kahl[uú]a|amaretto|marsala)\b/i, safe: /\b(cooking wine|(?:red |white |rice )?wine vinegar|ginger ale|root beer|(?:rum|brandy|sherry) extract)\b/gi, cats: ["alcohol"], sure: true },
-    { re: /\b(soda|cola|soft drinks?|root beer|ginger ale|sprite|7[- ]?up|dr\.? ?pepper|mountain dew|fanta)\b/i, safe: /\b(baking soda|soda water|club soda|bicarbonate of soda|soda bread|soda crackers)\b/gi, cats: ["soda", "sweetDrinks"], sure: true },
-    { re: /\b(energy drinks?|red bull|monster energy)\b/i, cats: ["energy", "sweetDrinks"], sure: true },
-    { re: /\b(lemonade|fruit punch|sweet tea|juice drink|kool[- ]?aid|sports drink|gatorade)\b/i, cats: ["sweetDrinks", "juiceDrinks"], sure: false },
-    { re: /\b(candy|candies|candy bars?|gumm(?:y|ies)|jelly beans|m&m'?s|marshmallows?|toffee|caramels|peppermints|chocolate (?:chips|morsels|bars?|candies|kisses)|sprinkles|butterscotch chips|peanut butter cups)\b/i, cats: ["candy"], sure: false },
+    { re: /\b(wine|beer|ale|ipa|lager|stout|porter|guinness|cider|mead|bourbon|whiske?y|scotch|rum|vodka|tequila|mezcal|gin|brandy|cognac|sherry|port|vermouth|liqueur|schnapps|champagne|prosecco|sangria|sake|soju|ouzo|absinthe|kahl[uú]a|amaretto|marsala|baileys|grand marnier|triple sec|cointreau|frangelico)\b/i,
+      safe: /\b(cooking wine|cooking sherry|(?:red |white |rice |sherry |champagne |cider |apple cider )?(?:wine )?vinegar|ginger ale|ginger beer|root beer|(?:rum|brandy|sherry|bourbon) extract|beer[- ]battered|wine[- ]braised|rum raisins?|apple cider|sweet cider|cider vinegar|port(?:obello|abella)? mushrooms?|pork|portion)\b/gi, cats: ["alcohol"], sure: true },
+    { re: /\b(soda|cola|coke|pepsi|soft drinks?|root beer|ginger ale|ginger beer|sprite|7[- ]?up|dr\.? ?pepper|mountain dew|fanta)\b/i, safe: /\b(baking soda|soda water|club soda|bicarbonate of soda|soda bread|soda crackers)\b/gi, cats: ["soda", "sweetDrinks", "unhealthyDrinks"], sure: true },
+    { re: /\b(energy drinks?|red bull|monster energy)\b/i, cats: ["energy", "sweetDrinks", "unhealthyDrinks"], sure: true },
+    { re: /\b(lemonade|fruit punch|hawaiian punch|sweet tea|juice drink|kool[- ]?aid|sports drink|gatorade)\b/i, cats: ["sweetDrinks", "juiceDrinks", "unhealthyDrinks"], sure: false },
+    { re: /\b(candy|candies|candy bars?|gumm(?:y|ies)|jelly beans|m&m'?s|marshmallows?|toffee|caramels|peppermints|(?:chocolate|choc|butterscotch|peanut butter|white chocolate) (?:chips?|morsels)|semi-?sweet morsels|chocolate (?:bars?|candies|kisses)|hershey'?s|reese'?s|snickers|kit ?kat|butterfinger|heath bars?|sprinkles|jimmies)\b/i, cats: ["candy"], sure: false },
   ];
 
   // ZIP code prefix (first three digits) to state, from the USPS prefix allocation.
@@ -2931,8 +2937,11 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     [870, 884, "NM"], [885, 885, "TX"], [889, 898, "NV"], [900, 961, "CA"], [967, 968, "HI"], [969, 969, "GU"], [970, 979, "OR"], [980, 994, "WA"], [995, 999, "AK"]];
 
   function stateForZip(zip) {
-    const m = /^(\d{3})\d{2}$/.exec(String(zip || "").trim());
+    const z = String(zip || "").trim().replace(/-\d{4}$/, ""); // ZIP+4 is fine
+    const m = /^(\d{3})\d{2}$/.exec(z);
     if (!m) return null;
+    if (z === "96799") return "AS"; // American Samoa shares Hawaii's prefix
+    if (+z >= 96950 && +z <= 96952) return "MP"; // Northern Mariana Islands share Guam's prefix
     const p = +m[1];
     const hit = ZIP3.find(([a, b]) => p >= a && p <= b);
     return hit ? hit[2] : null;
@@ -2945,15 +2954,18 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     if (state && !VACATED.includes(state)) for (const w of WAIVERS[state] || []) {
       if (w.start <= date) w.cats.forEach(c => now.add(c)); else later.push(w);
     }
+    const listed = new Set(now); // what USDA lists, for wording
     // A ban on sweetened drinks covers soda too.
     if (now.has("sweetDrinks")) now.add("soda");
-    return { state, date, now, later, vacated: VACATED.includes(state) };
+    return { state, date, now, listed, later, vacated: VACATED.includes(state), noSnap: !!NO_SNAP[state] };
   }
   function judge(cats, sure, rules) {
     if (cats.includes("alcohol")) return { status: "no", why: "Alcohol can't be bought with SNAP in any state." };
     const hit = cats.filter(c => rules.now.has(c));
     if (!hit.length) return { status: "ok" };
     const where = STATE_NAMES[rules.state] || rules.state;
+    if (hit.every(c => c === "unhealthyDrinks")) sure = false; // USDA's wording is too vague to be sure
+    hit.sort((a, b) => (a === "unhealthyDrinks") - (b === "unhealthyDrinks"));
     return sure
       ? { status: "no", why: where + " doesn't allow " + CAT_LABEL[hit[0]] + " with SNAP." }
       : { status: "maybe", why: where + " doesn't allow " + CAT_LABEL[hit[0]] + " with SNAP, and this may count. Check your state's list." };
@@ -2972,20 +2984,35 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     if (recipe.unmatched && recipe.unmatched.length) issues.push({ status: "maybe", why: "Some ingredient lines weren't recognised, so the app can't confirm they're covered." });
     return { ok: !issues.length, issues };
   }
-  const ONLINE = "Walmart, Amazon, Instacart and DoorDash take EBT online at participating stores, and so do Kroger-family stores such as Harris Teeter. SNAP pays for the food only: delivery fees, service fees and tips have to be paid another way.";
+  const ONLINE = "Walmart, Amazon, Instacart and DoorDash take EBT online at participating stores, and Harris Teeter takes it for online pickup orders. SNAP pays for the food only: delivery fees, service fees and tips have to be paid another way.";
   function describe(rules) {
     if (!rules.state) return "Add your ZIP code to apply your state's rules. Until then only the national rules are used.";
+    if (rules.noSnap) return "SNAP doesn't run in " + NO_SNAP[rules.state] + ", which has its own nutrition assistance program. Only the national SNAP rules are shown.";
     const name = STATE_NAMES[rules.state] || rules.state;
     const fmt = d => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
     if (rules.vacated) return name + "'s restriction waiver was struck down by a court, so the national rules apply.";
     const list = a => a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " or " + a[a.length - 1];
     const parts = [];
-    if (rules.now.size) parts.push(name + " doesn't allow " + list([...rules.now].filter(c => !(c === "soda" && rules.now.has("sweetDrinks"))).map(c => CAT_LABEL[c])) + " to be bought with SNAP.");
+    if (rules.listed.size) parts.push(name + " doesn't allow " + list([...rules.listed].map(c => CAT_LABEL[c])) + " to be bought with SNAP.");
     else parts.push(name + " has no extra SNAP food restrictions right now.");
     for (const w of rules.later) parts.push("From " + fmt(w.start) + " it " + (rules.now.size ? "also " : "") + "won't allow " + list(w.cats.map(c => CAT_LABEL[c])) + ".");
     return parts.join(" ");
   }
-  const API = { AS_OF, SOURCE, WAIVERS, VACATED, ITEM_CATS, STATE_NAMES, CAT_LABEL, ONLINE, stateForZip, rulesFor, itemStatus, lineStatus, recipeStatus, describe, today };
+  // Plain-language result for one recipe, for the recipe page.
+  function recipeNote(recipe, rules) {
+    const st = recipeStatus(recipe, rules);
+    const name = rules.state ? (rules.noSnap ? null : STATE_NAMES[rules.state] || rules.state) : null;
+    if (!st.ok) {
+      const whys = [...new Set(st.issues.map(i => (i.key || i.line ? (i.line ? "“" + String(i.line).slice(0, 60) + "”: " : "") : "") + i.why))];
+      const sure = st.issues.some(i => i.status === "no");
+      return { ok: false, text: (sure ? "SNAP: this recipe has an ingredient SNAP doesn't cover" : "SNAP: this recipe may not be fully covered") + (name ? " in " + name : "") + ". " + whys.join(" ") };
+    }
+    const sensitive = recipe.i.some(([k]) => ITEM_CATS[k]);
+    if (!name) return { ok: true, text: "SNAP: every ingredient here is covered under the national SNAP rules." + (sensitive ? " Some states count chocolate chips as candy, so add your ZIP code to check yours." : rules.state ? "" : " Add your ZIP code to apply your state's rules too.") };
+    return { ok: true, text: "SNAP: every ingredient here can be bought with SNAP in " + name + " under the rules USDA listed on " + fmtDay(AS_OF) + "." };
+  }
+  function fmtDay(d) { return new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }); }
+  const API = { AS_OF, SOURCE, WAIVERS, VACATED, NO_SNAP, recipeNote, ITEM_CATS, STATE_NAMES, CAT_LABEL, ONLINE, stateForZip, rulesFor, itemStatus, lineStatus, recipeStatus, describe, today };
   if (typeof module !== "undefined") module.exports = API; else root.Snap = API;
 })(typeof window !== "undefined" ? window : globalThis);
 
@@ -4128,7 +4155,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       '<ol class="steps">' + steps + "</ol>" +
       (done.size === M.s.length ? '<p class="note ok">All steps done. Enjoy your meal.</p>' : "") +
       '<div class="btns"><button type="button" class="btn ghost" id="resetSteps">Reset steps</button></div>' +
-      (readOpts().snap ? '<p class="note ok">' + esc(snapNote()) + "</p>" : "") +
+      (opts.snap ? (n => '<p class="note ' + (n.ok ? "ok" : "warn") + '" id="snapNote">' + esc(n.text + " " + Snap.ONLINE) + "</p>")(Snap.recipeNote(eff, opts.snap)) : "") +
       '<p class="note">Always check product labels for allergens. Prices marked “estimate” are rough national figures, not store prices.</p>';
     $$("#detailBody .fav").forEach(b => b.addEventListener("click", () => { toggleFav(b.dataset.fav); keepScroll(renderDetail); }));
     $$("#detailBody .swapsel").forEach(el => el.addEventListener("change", () => { setSwap(r.id, el.dataset.line, el.value === "" ? null : +el.value); keepScroll(renderDetail); render(); }));
@@ -4995,10 +5022,6 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     }
   }
 
-  function snapNote() {
-    const rr = snapRules(), where = rr.state ? Snap.STATE_NAMES[rr.state] || rr.state : "every state";
-    return "SNAP: every ingredient here can be bought with SNAP in " + where + " under the rules USDA listed on " + fmtDate(Snap.AS_OF) + ". " + Snap.ONLINE;
-  }
   function fmtDate(d) { return new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }); }
   function loadAllergies() { const a = store.get("allergies", []); $$('input[name="allergen"]').forEach(x => { x.checked = a.includes(x.value); }); $("#exclude").value = store.get("avoid", ""); }
   function initExtras() {
