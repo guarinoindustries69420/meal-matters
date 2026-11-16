@@ -136,7 +136,7 @@ ol.steps{list-style:none;padding:0;margin:0}
 .timer{margin:8px 0 0 50px;border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:999px;padding:6px 12px;font-size:.85rem;cursor:pointer;min-height:36px}
 .timer.ring{background:var(--sale);border-color:var(--sale);color:#fff}
 .note.ok{color:var(--accent);font-weight:600}
-#splash{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
+#splash{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto;overscroll-behavior:contain}#splash>*{margin-top:auto;margin-bottom:auto}
 #splashLogo{text-align:center;cursor:pointer;animation:fadein .6s ease}
 #splash.dark{background:#000}
 #splashLogo .logo{width:min(88vw,560px);height:auto;display:block;margin:0 auto}
