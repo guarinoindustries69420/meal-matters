@@ -102,7 +102,7 @@ ol{padding-left:22px}ol li{margin:6px 0}
 .btn{border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);border-radius:12px;font-weight:700;padding:9px 14px;cursor:pointer;min-height:42px}
 .btn.ghost{background:transparent;color:var(--accent)}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.status{font-size:.88rem;margin-top:10px;color:var(--muted)}.status.bad{color:var(--sale)}.status.ok{color:var(--accent);font-weight:600}
+.status{font-size:.88rem;margin-top:10px;color:var(--muted)}.status.bad{color:var(--sale)}.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}.picks{display:flex;flex-direction:column;gap:8px;margin-top:12px}.pickbtn{display:flex;align-items:center;justify-content:center;text-align:center;min-height:46px;cursor:pointer}.vh:focus-visible+.pickbtn{outline:2px solid var(--accent);outline-offset:2px}.status.ok{color:var(--accent);font-weight:600}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:10}
 nav.tabs button{flex:1;max-width:190px;border:0;background:none;padding:12px 4px;font-size:.85rem;color:var(--muted);cursor:pointer;min-height:52px}
 nav.tabs button[aria-current=page]{color:var(--accent);font-weight:700;box-shadow:inset 0 3px 0 var(--accent)}
@@ -579,9 +579,13 @@ footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
       <label class="f">Recipe web address<input id="impUrl" type="url" placeholder="https://" autocomplete="off" inputmode="url"></label>
       <div class="btns"><button type="button" class="btn" id="impFetch">Get recipe</button><button type="button" class="btn ghost" id="impCancel">Cancel</button></div>
       <p class="status" id="impStatus" role="status"></p>
-      <label class="f filepick">Or pick a recipe file (PDF or Word)<input id="impFile" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label>
-      <p class="hint">The file is read on this device. Nothing is uploaded.</p>
-      <details id="impPasteBox"><summary>Or paste it in</summary>
+      <div class="picks">
+        <input id="impPhoto" class="vh" type="file" accept="image/*"><label for="impPhoto" class="btn ghost pickbtn">Take or choose a photo of a recipe</label>
+        <input id="impFile" class="vh" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"><label for="impFile" class="btn ghost pickbtn">Pick a recipe file (PDF or Word)</label>
+      </div>
+      <p class="hint">Photos and files are read on this device. Nothing is uploaded. You can fix anything it gets wrong before saving.</p>
+      <p class="status" id="impUndoRow" hidden><button type="button" class="link" id="impUndo">Undo, put back what was in the boxes</button></p>
+      <details id="impPasteBox"><summary>Type, paste or edit the recipe</summary>
         <label class="f">Recipe name<input id="impName" type="text"></label>
         <label class="f">Servings<input id="impServes" type="number" min="1" max="50" value="4" inputmode="numeric"></label>
         <label class="f">Ingredients, one per line<textarea id="impIngs" rows="6" placeholder="1 lb ground beef&#10;1 can black beans&#10;2 tsp chili powder"></textarea></label>
@@ -1188,7 +1192,7 @@ if (typeof module !== "undefined") module.exports = globalThis.MEAL_MATTERS_DATA
         ["Serve on the buns with lettuce, sliced tomato and onion.", "Burgers are built and served.", 0]]),
       campfire: V(["campfire"], 12, [
         ["Shape the beef into four patties slightly wider than the buns and season both sides.", "Four patties, each about ¾ inch thick with a thumb dent in the middle.", 0],
-        ["Set a grill grate over hot coals; you should only be able to hold your hand above them for about 4 seconds. Cook the patties about 5 minutes per side, moving them if flames flare up.", "Each side has a dark crust and the center reads 160°F.", 10],
+        ["Set a grill grate over hot coals; they're ready when you can hold your hand about 5 inches above the grate for only 4 seconds or so. Cook the patties about 5 minutes per side, moving them if flames flare up.", "Each side has a dark crust and the center reads 160°F.", 10],
         ["Lay sliced cheddar on top for the last minute. Warm the buns at the edge of the grate.", "Cheese is melted and the buns are warm.", 1],
         ["Serve on the buns with lettuce, sliced tomato and onion.", "Burgers are built and served.", 0]]),
     },
@@ -1227,7 +1231,7 @@ if (typeof module !== "undefined") module.exports = globalThis.MEAL_MATTERS_DATA
       campfire: V(["campfire"], 45, [
         ["Cut the potatoes small, toss with half the oil, salt and pepper, and seal in a double layer of heavy-duty foil. Set the packet on hot coals at the edge of the fire, turning it every 10 minutes with tongs.", "A fork slides through the potatoes.", 30],
         ["Season the steak well and let it sit while the potatoes cook.", "Steak surface looks dry and it has reached room temperature.", 0],
-        ["Brush the steak with the rest of the oil and cook on a grate over hot coals, about 4 to 5 minutes per side for medium-rare. The coals are hot enough when you can only hold your hand above the grate for about 4 seconds.", "Dark crust forms, and the center reads 130 to 135°F for medium-rare (USDA recommends 145°F).", 9],
+        ["Brush the steak with the rest of the oil and cook on a grate over hot coals, about 4 to 5 minutes per side for medium-rare. The coals are ready when you can hold your hand about 5 inches above the grate for only 4 seconds or so.", "Dark crust forms, and the center reads 130 to 135°F for medium-rare (USDA recommends 145°F).", 9],
         ["Top the steak with the butter and minced garlic and let it melt while the steak rests 5 minutes before slicing.", "Steak has rested 5 minutes and the juices stay on the board when sliced.", 5]]),
     },
     "pork-chops-apples": {
@@ -3151,11 +3155,11 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   // Words in an imported recipe line. Alcohol is never SNAP-eligible; the rest depend on the state.
   const RAW = [
     { re: /\b(wine|beer|ale|ipa|lager|stout|porter|guinness|hard (?:apple )?cider|hard seltzer|mead|bourbon|whiske?y|scotch|rum|vodka|tequila|mezcal|gin|brandy|cognac|sherry|port|vermouth|liqueur|schnapps|champagne|prosecco|sangria|sake|soju|ouzo|absinthe|limoncello|kahl[uú]a|amaretto|marsala|vin santo|bailey'?s|grand marnier|triple sec|cointreau|frangelico|j[aä]germeister|chardonnay|merlot|cabernet|pinot (?:noir|grigio|gris)|riesling|sauvignon blanc|moscato|zinfandel|bud light|budweiser|corona|coors|heineken|modelo|miller lite|white claw|jack daniel'?s|jameson|fireball|smirnoff|bacardi|captain morgan|hennessy|tito'?s)\b/i,
-      safe: /\b(scotch bonnets?(?: peppers?)?|scotch eggs?|butterscotch|bailey'?s (?:coffee )?creamer|atomic fireballs?|(?:jack daniel'?s|bourbon|whiske?y|beer) (?:barbecue|bbq|grilling) sauce|bourbon barrel[- ]aged|beer cheese(?: dip| soup)?|(?:\w+ ){1,2}grapes|cooking wine|cooking sherry|(?:red |white |rice |sherry |champagne |cider |apple cider |malt |ale )?(?:wine )?vinegar|ginger ale|ginger beer|root beer|(?:rum|brandy|sherry|bourbon) extract|bourbon vanilla(?: beans?| extract| paste)?|madagascar bourbon|beer[- ]battered|beer bread(?: mix)?|wine[- ]braised|rum raisins?|champagne (?:grapes|mangoe?s?)|port[- ]salut|port wine (?:cheese|jelly)|for (?:\w+(?:'s|s'|')? ){1,3}sake|(?:the )?sake of|corona (?:beans?|squash))\b/gi, cats: ["alcohol"], sure: true },
+      safe: /\b(scotch bonnets?(?: peppers?)?|scotch eggs?|butterscotch|bailey'?s (?:coffee )?creamer|atomic fireballs?|fireball (?:cinnamon )?(?:candies|candy|jawbreakers?)|(?:(?:jack daniel'?s|bourbon|whiske?y|beer) ){1,2}(?:barbecue|bbq|grilling) sauce|bourbon barrel[- ]aged|beer cheese(?: dip| soup)?|(?:red|green|black|purple|white|seedless|concord|champagne|cotton candy|moscato|muscat|globe|table|pinot noir|wine) grapes|cooking wine|cooking sherry|(?:red |white |rice |sherry |champagne |cider |apple cider |malt |ale )?(?:wine )?vinegar|ginger ale|ginger beer|root beer|(?:rum|brandy|sherry|bourbon) extract|bourbon vanilla(?: beans?| extract| paste)?|madagascar bourbon|beer[- ]battered|beer bread(?: mix)?|wine[- ]braised|rum raisins?|champagne (?:grapes|mangoe?s?)|port[- ]salut|port wine (?:cheese|jelly)|for (?:\w+(?:'s|s'|')? ){1,3}sake|(?:the )?sake of|corona (?:beans?|squash))\b/gi, cats: ["alcohol"], sure: true },
     { re: /\b(soda|cola|coke|pepsi|soft drinks?|root beer|ginger ale|ginger beer|sprite|7[- ]?up|dr\.? ?pepper|mountain dew|fanta|canada dry|a&w)\b/i, safe: /\b(canada dry (?:club soda|seltzer)|baking soda|bicarb(?:onate)?(?: of)? soda|soda water|club soda|soda bread|soda crackers)\b/gi, cats: ["soda", "sweetDrinks", "unhealthyDrinks"], sure: true },
     { re: /\b(energy drinks?|red bull|monster energy)\b/i, cats: ["energy", "sweetDrinks", "unhealthyDrinks"], sure: true },
     { re: /\b(lemonade|fruit punch|hawaiian punch|sweet tea|juice drink|kool[- ]?aid|sports drink|gatorade)\b/i, cats: ["sweetDrinks", "juiceDrinks", "unhealthyDrinks"], sure: false },
-    { re: /\b(candy|candies|candy bars?|gumm(?:y|ies)|jelly beans|m&m'?s|marshmallows?|toffee|caramels|peppermints|(?:chocolate|choc|butterscotch|peanut butter|white chocolate) (?:chips?|morsels)|semi-?sweet morsels|chocolate (?:bars?|candies|kisses)|hershey(?:'?s)? (?:bars?|kisses|milk chocolate)|atomic fireballs?|reese'?s|snickers|kit ?kats?|butterfinger|heath bars?|skittles|starburst|twix|milky way|sprinkles|jimmies)\b/i, cats: ["candy"], sure: false },
+    { re: /\b(candy|candies|candy bars?|gumm(?:y|ies)|jelly beans|m&m'?s|marshmallows?|toffee|caramels|peppermints|(?:chocolate|choc|butterscotch|peanut butter|white chocolate) (?:chips?|morsels)|semi-?sweet morsels|chocolate (?:bars?|candies|kisses)|hershey(?:'?s)? (?:bars?|kisses|milk chocolate)|atomic fireballs?|fireball (?:cinnamon )?(?:candies|candy|jawbreakers?)|reese'?s|snickers|kit ?kats?|butterfinger|heath bars?|skittles|starburst|twix|milky way|sprinkles|jimmies)\b/i, safe: /\bcotton candy grapes\b/gi, cats: ["candy"], sure: false },
   ];
 
   // ZIP code prefix (first three digits) to state, from the USPS prefix allocation.
@@ -3204,7 +3208,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   }
   function itemStatus(key, rules) { const c = ITEM_CATS[key]; return c ? judge(c.cats, c.sure, rules) : { status: "ok" }; }
   function lineStatus(line, rules) {
-    const s = String(line || "");
+    const s = String(line || "").replace(/[\u2018\u2019\u02bc\u2032]/g, "'"); // Word's curly apostrophes read like straight ones
     for (const r of RAW) { const t = r.safe ? s.replace(r.safe, " ") : s; if (r.re.test(t)) { const j = judge(r.cats, r.sure, rules); if (j.status !== "ok") return j; } }
     return { status: "ok" };
   }
@@ -3819,7 +3823,10 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   // Words that point to catalog items; first match wins, longest phrases first.
   const ALIASES = {
     "chicken breast": "chickenBreast", "chicken breasts": "chickenBreast", "chicken thigh": "chickenBreast", "chicken legs": "chickenLegs", "drumstick": "chickenLegs", "whole chicken": "wholeChicken",
-    "ground turkey": "groundTurkey", "lean ground beef": "leanBeef", "extra-lean ground beef": "leanBeef", "turkey bacon": "turkeyBacon",
+    "ground turkey": "groundTurkey", "ground turkey breast": "groundTurkey", "lean ground turkey": "groundTurkey",
+    "whole wheat spaghetti": "wwPasta", "whole-wheat spaghetti": "wwPasta", "whole wheat penne": "wwPasta", "whole-wheat penne": "wwPasta", "whole grain pasta": "wwPasta", "whole-grain pasta": "wwPasta",
+    "whole grain bread": "wwBread", "whole-grain bread": "wwBread", "low sodium broth": "lowSodiumBroth", "low-sodium broth": "lowSodiumBroth",
+    "reduced-sodium chicken broth": "lowSodiumBroth", "reduced sodium chicken broth": "lowSodiumBroth", "reduced-sodium broth": "lowSodiumBroth", "lean ground beef": "leanBeef", "extra-lean ground beef": "leanBeef", "turkey bacon": "turkeyBacon",
     "brown rice": "brownRice", "cauliflower rice": "cauliflowerRice", "riced cauliflower": "cauliflowerRice", "whole wheat pasta": "wwPasta", "whole-wheat pasta": "wwPasta",
     "whole wheat bread": "wwBread", "whole-wheat bread": "wwBread", "low-sodium chicken broth": "lowSodiumBroth", "low sodium chicken broth": "lowSodiumBroth",
     "skim milk": "skimMilk", "fat-free milk": "skimMilk", "nonfat milk": "skimMilk",
@@ -3846,7 +3853,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   // a unit, or a plain description from this list. Anything else (a brand, "almond", "brioche", "with meatballs",
   // "cooked in dashi", "or kamut") leaves the line unmatched, and an unmatched line keeps the recipe out of every
   // diet and allergy filter. This fails safe: a word nobody thought of hides the recipe instead of passing it.
-  const SAFE = new Set(("large small medium extra jumbo whole half halves fresh frozen thawed dried dry canned jarred raw uncooked cooked leftover cold warm hot room temperature " +
+  const SAFE = new Set(("% lean extra-lean large small medium extra jumbo whole half halves fresh frozen thawed dried dry canned jarred raw uncooked cooked leftover cold warm hot room temperature " +
     "softened melted chopped diced minced sliced thinly thickly thin thick finely roughly coarsely grated shredded crushed mashed peeled unpeeled cored seeded deseeded " +
     "stemmed trimmed halved quartered cubed cut into inch inches pieces piece chunks chunk strips strip wedges florets rinsed drained undrained divided packed loosely lightly firmly " +
     "beaten whisked boneless skinless bone-in skin-on lean extra-lean plain regular white yellow red green orange ripe organic kosher sea table iodized coarse fine freshly cracked " +
@@ -4087,113 +4094,236 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     throw new Error("No document text was found in this Word file.");
   }
   const ENT = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
-  const unxml = s => s.replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (m, g) => g[0] === "#" ? String.fromCodePoint(g[1] === "x" || g[1] === "X" ? parseInt(g.slice(2), 16) : +g.slice(1)) : ENT[g] || m);
+  const cp = n => (Number.isInteger(n) && n > 0 && n <= 0x10ffff && !(n >= 0xd800 && n <= 0xdfff) ? String.fromCodePoint(n) : "");
+  const unxml = s => s.replace(/&(#[xX][0-9a-fA-F]{1,8}|#\d{1,8}|[a-zA-Z]{1,8});/g, (m, g) => g[0] === "#" ? cp(g[1] === "x" || g[1] === "X" ? parseInt(g.slice(2), 16) : +g.slice(1)) : ENT[g] || m);
+  // Word wraps deleted and moved-away text, and field codes, in these elements; their text is not part of the document.
+  const SKIP = new Set(["w:del", "w:moveFrom", "w:instrText", "w:delText"]);
   // Paragraphs in order; tabs and line breaks kept as spaces and new lines.
+  // One pass with indexOf, so the time grows with the file size, never faster (hostile files can't stall it).
+  // A self-closing <w:del .../> (a deleted paragraph mark) is only a marker and hides nothing.
   function xmlParagraphs(xml) {
-    const body = xml.replace(/<w:(del|moveFrom|instrText|delText)\b[^>]*>[\s\S]*?<\/w:\1>/g, "");
-    return body.split(/<\/w:p>/).map(par => {
-      let t = "";
-      par.replace(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>|<w:(tab|br|cr)\b[^>]*\/>/g, (m, txt, tag) => { t += txt != null ? unxml(txt) : tag === "tab" ? " " : "\n"; return ""; });
-      return t;
-    }).join("\n");
+    const out = []; let buf = "", pos = 0, skip = 0, inT = false;
+    for (;;) {
+      const lt = xml.indexOf("<", pos);
+      const txt = xml.slice(pos, lt < 0 ? xml.length : lt);
+      if (inT && !skip && txt) buf += unxml(txt);
+      if (lt < 0) break;
+      const gt = xml.indexOf(">", lt);
+      if (gt < 0) break;
+      const tag = xml.slice(lt + 1, gt); pos = gt + 1;
+      if (tag[0] === "?" || tag[0] === "!") continue;
+      const closing = tag[0] === "/", self = tag[tag.length - 1] === "/";
+      const name = (closing ? tag.slice(1) : tag).split(/[\s/]/, 1)[0];
+      if (SKIP.has(name)) { if (!self) skip = closing ? Math.max(0, skip - 1) : skip + 1; continue; }
+      if (name === "w:t") inT = !closing && !self;
+      else if (skip) continue;
+      else if (name === "w:tab" && !closing) buf += " ";
+      else if ((name === "w:br" || name === "w:cr") && !closing) buf += "\n";
+      else if (name === "w:p" && (closing || self)) { out.push(buf); buf = ""; }
+    }
+    if (buf) out.push(buf);
+    return out.join("\n") + (out.length ? "\n" : "");
   }
   async function docxText(buf) { return xmlParagraphs(await docxXml(buf)); }
 
   // ---------- PDF, through pdf.js (loaded only when needed) ----------
   async function pdfText(buf, pdfjs) {
-    const doc = await pdfjs.getDocument({ data: new Uint8Array(buf), isEvalSupported: false }).promise;
-    let out = "";
-    for (let i = 1; i <= Math.min(doc.numPages, MAX_PAGES); i++) {
-      const tc = await (await doc.getPage(i)).getTextContent();
-      let lastY = null;
-      for (const it of tc.items) {
-        const y = it.transform ? Math.round(it.transform[5]) : null;
-        if (lastY !== null && y !== null && Math.abs(y - lastY) > 2 && !out.endsWith("\n")) out += "\n";
-        out += it.str; if (it.hasEOL) out += "\n";
-        if (y !== null) lastY = y;
+    // pdf.js moves the bytes it is given to its worker, so it always gets a copy; the caller's buffer stays usable.
+    const task = pdfjs.getDocument({ data: new Uint8Array(buf.slice(0)) });
+    try {
+      const doc = await task.promise;
+      let out = "";
+      for (let i = 1; i <= Math.min(doc.numPages, MAX_PAGES); i++) {
+        const tc = await (await doc.getPage(i)).getTextContent();
+        let lastY = null;
+        for (const it of tc.items) {
+          const y = it.transform ? Math.round(it.transform[5]) : null;
+          // A new line when the text moves up or down the page, or pdf.js marks an end of line.
+          if (lastY !== null && y !== null && Math.abs(y - lastY) > 2 && !out.endsWith("\n")) out += "\n";
+          out += it.str; if (it.hasEOL) out += "\n";
+          if (y !== null) lastY = y;
+        }
+        out += "\n";
       }
-      out += "\n";
-    }
-    return { text: out, pages: doc.numPages };
+      return { text: out, pages: doc.numPages };
+    } finally { try { await task.destroy(); } catch (e) {} } // frees the pdf.js worker
   }
 
   // ---------- Text to recipe ----------
-  const H_ING = /^(?:ingredients?|what you(?:'|’)?ll need|you(?:'|’)?ll need|you will need)\s*:?$/i;
+  const H_ING = /^(?:ingredients?|what you'?ll need|you'?ll need|you will need)\s*:?$/i;
   const H_STEP = /^(?:directions?|instructions?|method|preparation|steps?|how to make(?: it)?|procedure)\s*:?$/i;
-  const H_END = /^(?:notes?|tips?|cook(?:'|’)?s notes?|nutrition(?: facts| information| info)?|storage|to store|serving suggestions?|equipment|recipe notes?)\s*:?$/i;
+  const H_END = /^(?:notes?|tips?|cook'?s notes?|nutrition(?: facts| information| info)?|storage|to store|serving suggestions?|equipment|recipe notes?)\s*:?$/i;
   const META = /^(?:prep(?:aration)? time|cook(?:ing)? time|total time|ready in|serves|servings|yield|makes|difficulty|course|cuisine|author|by\b|source|calories)\b/i;
   const QTY = /^(?:\d|[½⅓⅔¼¾⅛⅜⅝⅞]|(?:a|an|one|two|three|four|five|six|half|pinch|dash|handful|few|several|some|salt|pepper|fresh|juice of|zest of)\b)/i;
   const NUMSTEP = /^(?:step\s*)?(\d{1,2})\s*[.):]\s+|^step\s*(\d{1,2})\s*$/i;
+  // "1. Heat the oven" is a step; "1 cup flour" and "1/2 tsp salt" are ingredients.
+  const STEPLINE = /^(?:step\s*\d{1,2}\b|\d{1,2}\s*[.)]\s+[A-Za-z])/i;
+  // Ingredient sub-headings written without a colon ("Filling", "Dry", "For the sauce").
+  const SUBHEAD = /^(?:for (?:the )?\w+(?: \w+)?|filling|crust|topping|toppings|sauce|dressing|glaze|frosting|icing|dough|batter|marinade|dry|wet|dry ingredients|wet ingredients|garnish|base|crumble|streusel|to serve|for serving)\s*:?$/i;
+  const STAMP = /^\d{1,2}\/\d{1,2}\/\d{2,4},?\s+\d{1,2}:\d{2}(?:\s*[ap]m)?\s*/i; // browser print header
+  const UNIT_ONLY = /^(?:\d+\s+\d+\/\d+|\d+\s*[½⅓⅔¼¾⅛⅜⅝⅞]|\d+(?:[\/.]\d+)?|[½⅓⅔¼¾⅛⅜⅝⅞])(?:\s*(?:-|to)\s*\d+)?(?:\s+(?:cups?|c\.|tbsp|tablespoons?|tsp|teaspoons?|oz|ounces?|lbs?|pounds?|g|grams?|kg|ml|l|liters?|cans?|cloves?|pinch|dash|large|medium|small|whole))?\.?$/i;
   // Bullets come in many shapes; PDFs made from Word often use a private symbol-font character (U+F0B7).
-  const clean = l => l.replace(/[\ue000-\uf8ff]/g, " ").replace(/[\u00a0\t]+/g, " ").replace(/^\s*(?:[-*\u2022\u25aa\u25e6\u00b7\u25cb\u25cf\u25a0\u25a1\u2713\u2714\u2023\u2043\u27a2\u25ba\u25b6]|\(\s*\)|\[\s*\])\s*/, "").replace(/\s+/g, " ").trim();
-  function textToRecipe(text, filename) {
-    const lines = String(text || "").split(/\r?\n/).map(clean).filter(Boolean);
+  // Curly apostrophes become straight ones, so "Bailey’s" reads the same as "Bailey's" everywhere downstream.
+  const clean = l => l.replace(/[-]/g, " ").replace(/[‘’ʼ′]/g, "'").replace(/[ \t]+/g, " ")
+    .replace(/^\s*(?:[-*•▪◦·○●■□✓✔‣⁃➢►▶]|\(\s*\)|\[\s*\])\s*/, "").replace(/\s+/g, " ").trim();
+  // Servings from a "Serves 4" / "Yield: 6 servings" line. "Makes 24 cookies" is a count, not servings.
+  function servingsFrom(lines) {
+    for (const l of lines) {
+      const m = /^(?:.*?\b)?(serves|servings|yield|makes)\b\s*:?\s*(?:about\s*)?(\d{1,3})(?:\s*(?:-|to)\s*\d{1,3})?\s*([a-z]+)?/i.exec(l);
+      if (!m || /servings? per container/i.test(l)) continue;
+      const kw = m[1].toLowerCase(), unit = (m[3] || "").toLowerCase();
+      if ((kw === "yield" || kw === "makes") && unit && !/^(?:servings?|people|portions?|persons?)$/.test(unit)) continue;
+      const n = +m[2]; if (n >= 1 && n <= 50) return String(n);
+    }
+    return "";
+  }
+  // opts.paragraphs: each line is a real paragraph (Word files), so steps never join across lines
+  // unless the next line starts in lowercase.
+  function textToRecipe(text, filename, opts) {
+    const para = !!(opts && opts.paragraphs);
+    const lines = String(text || "").split(/\r?\n/).map(clean).map(l => l.replace(STAMP, "").trim()).filter(Boolean)
+      .filter(l => !/^(?:\d+x\s*){2,}$/i.test(l) && !/^page \d+(?: of \d+)?$/i.test(l) && !/^https?:\/\/\S+$/i.test(l));
     const name0 = String(filename || "").replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
-    const all = lines.join("\n");
-    const y = /(?:serves|servings|yield|makes)\s*:?\s*(?:about\s*)?(\d{1,3})/i.exec(all);
-    let iH = lines.findIndex(l => H_ING.test(l)), sH = lines.findIndex((l, k) => k > iH && H_STEP.test(l));
-    let ing = [], steps = [], name = "";
+    const iH = lines.findIndex(l => H_ING.test(l)), sH = lines.findIndex((l, k) => k > iH && H_STEP.test(l));
+    let ing = [], steps = [];
     // Where the recipe body begins: the first heading, or with no headings the first quantity line.
-    const qStart = lines.findIndex(l => QTY.test(l) && l.length < 90 && !META.test(l));
+    const qStart = lines.findIndex(l => QTY.test(l) && l.length < 90 && !META.test(l) && !STEPLINE.test(l));
     const firstHead = iH >= 0 || sH >= 0 ? Math.min(...[iH, sH].filter(k => k >= 0)) : qStart >= 0 ? qStart : lines.length;
-    name = lines.slice(0, firstHead).find(l => l.length >= 3 && l.length <= 80 && !META.test(l) && !/^page \d/i.test(l) && !/^https?:/i.test(l)) || name0 || "My recipe";
+    const name = lines.slice(0, firstHead).find(l => l.length >= 3 && l.length <= 80 && !META.test(l)) || name0 || "My recipe";
+    const head = lines.slice(0, Math.max(firstHead, 1)).concat(lines.filter(l => META.test(l)));
     const cut = (from, to) => { const out = []; for (let k = from; k < to; k++) { if (H_END.test(lines[k]) || H_STEP.test(lines[k])) break; out.push(lines[k]); } return out; };
     if (iH >= 0) {
       ing = cut(iH + 1, sH >= 0 ? sH : lines.length).filter(l => !META.test(l));
       steps = sH >= 0 ? cut(sH + 1, lines.length) : [];
-      if (sH < 0) { // no steps heading: long sentences after the ingredients are steps
-        const k = ing.findIndex((l, n) => n > 0 && !QTY.test(l) && l.length > 50);
+      if (sH < 0) { // no steps heading: numbered or long sentences after the ingredients are steps
+        const k = ing.findIndex((l, n) => n > 0 && (STEPLINE.test(l) || (!QTY.test(l) && l.length > 50)));
         if (k > 0) { steps = ing.slice(k); ing = ing.slice(0, k); }
       }
-    } else {
-      // No headings: quantity lines are ingredients, longer sentences after them are steps.
-      const start = qStart;
-      if (start >= 0) {
-        let k = start;
-        while (k < lines.length && ((QTY.test(lines[k]) && lines[k].length < 90) || lines[k].endsWith(":") && lines[k].length < 40)) k++;
-        ing = lines.slice(start, k); steps = lines.slice(k).filter(l => !H_END.test(l) && !META.test(l));
-        const endAt = steps.findIndex(l => H_END.test(l)); if (endAt >= 0) steps = steps.slice(0, endAt);
-      }
+    } else if (qStart >= 0) {
+      // No headings: quantity lines are ingredients; numbered lines and longer sentences after them are steps.
+      let k = qStart;
+      while (k < lines.length && !STEPLINE.test(lines[k]) && ((QTY.test(lines[k]) && lines[k].length < 90) || SUBHEAD.test(lines[k]) || UNIT_ONLY.test(lines[k]) || (lines[k].endsWith(":") && lines[k].length < 40))) k++;
+      ing = lines.slice(qStart, k); steps = lines.slice(k).filter(l => !META.test(l));
+      const endAt = steps.findIndex(l => H_END.test(l)); if (endAt >= 0) steps = steps.slice(0, endAt);
     }
-    // Ingredients: drop sub-headings ("For the sauce:"), join a wrapped line onto the one before it.
-    const ingOut = [];
+    // Ingredients: drop sub-headings, join a table cell that holds only an amount ("2 tbsp" / "Olive oil"),
+    // and join a wrapped line onto the one before it.
+    const ingOut = []; let carry = "";
     for (const l of ing) {
-      if (/:$/.test(l) && l.length < 40 && !QTY.test(l)) continue;
-      if (ingOut.length && /^[a-z(]/.test(l) && !QTY.test(l)) ingOut[ingOut.length - 1] += " " + l; else ingOut.push(l);
+      if (((/:$/.test(l) && l.length < 40) || SUBHEAD.test(l)) && !/\d/.test(l)) continue;
+      if (UNIT_ONLY.test(l)) { carry = (carry ? carry + " " : "") + l; continue; }
+      const line = carry ? carry + " " + l : l; carry = "";
+      if (ingOut.length && /^[a-z(]/.test(line) && !QTY.test(line)) ingOut[ingOut.length - 1] += " " + line; else ingOut.push(line);
     }
+    if (carry) ingOut.push(carry);
     // Steps: a number starts a step; otherwise a line that doesn't end a sentence continues the step.
     const stOut = []; let open = false;
     for (const l0 of steps) {
       const m = NUMSTEP.exec(l0); const l = l0.replace(NUMSTEP, "").trim();
       if (!l) { open = false; continue; }
-      if (m || !open || !stOut.length) stOut.push(l); else stOut[stOut.length - 1] += " " + l;
+      const joins = !m && stOut.length && (para ? /^[a-z]/.test(l) : open);
+      if (joins) stOut[stOut.length - 1] += " " + l; else stOut.push(l);
       open = !/[.!?)]$/.test(l);
-      if (m) open = !/[.!?)]$/.test(l);
     }
-    return { name: name.slice(0, 120), ingredients: ingOut.slice(0, 80), steps: stOut.slice(0, 40), yield: y ? y[1] : "", found: { ingredientsHeading: iH >= 0, stepsHeading: sH >= 0 } };
+    return { name: name.slice(0, 120), ingredients: ingOut.slice(0, 80), steps: stOut.slice(0, 40), yield: servingsFrom(head), found: { ingredientsHeading: iH >= 0, stepsHeading: sH >= 0 } };
   }
 
   // ---------- One entry point for the screen ----------
-  async function readRecipeFile(file, loadPdfjs) {
+  // Messages the user should see as they are; anything else is replaced with a plain explanation.
+  class Plain extends Error {}
+  // ocr (optional): { makeWorker, onProgress, makeCanvas } to read scanned PDFs on the device.
+  async function readRecipeFile(file, loadPdfjs, ocr) {
     const nm = String(file.name || ""), ext = (/\.([a-z0-9]+)$/i.exec(nm) || [])[1] || "";
-    if (file.size > MAX_BYTES) throw new Error("That file is over 15 MB. Recipe files are usually much smaller.");
+    if (file.size > MAX_BYTES) throw new Plain("That file is over 15 MB. Recipe files are usually much smaller.");
+    const isDocx = /^docx$/i.test(ext) || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    const isPdf = /^pdf$/i.test(ext) || file.type === "application/pdf";
+    if (/^doc$/i.test(ext)) throw new Plain("Older Word .doc files can't be read. Open it in Word and save it as .docx, or as a PDF.");
+    if (!isDocx && !isPdf) throw new Plain("Pick a PDF or a Word .docx file.");
     const buf = await file.arrayBuffer();
     let text = "", kind;
-    if (/^docx$/i.test(ext) || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") { kind = "docx"; text = await docxText(buf); }
-    else if (/^pdf$/i.test(ext) || file.type === "application/pdf") {
-      kind = "pdf";
-      let pdfjs; try { pdfjs = await loadPdfjs(); } catch (e) { throw new Error("The PDF reader couldn't load. Open the app from meals.guarinoindustries.com and try again, or paste the recipe in."); }
-      text = (await pdfText(buf, pdfjs)).text;
-      if (text.replace(/\s/g, "").length < 40) throw new Error("This PDF looks like a scan or a photo, so there's no text to read. For now, type or paste the recipe in. Reading scans is coming.");
+    try {
+      if (isDocx) {
+        kind = "docx";
+        if (typeof DecompressionStream === "undefined") throw new Plain("This browser can't open Word files. Update it, or paste the recipe in.");
+        text = await docxText(buf);
+      } else {
+        kind = "pdf";
+        let pdfjs; try { pdfjs = await loadPdfjs(); } catch (e) { throw new Plain("The PDF reader couldn't load. Open the app from meals.guarinoindustries.com and try again, or paste the recipe in."); }
+        try { text = (await pdfText(buf, pdfjs)).text; }
+        catch (e) {
+          if (e && e.name === "PasswordException") throw new Plain("This PDF is password-protected. Open it, save a copy without a password, or paste the recipe in.");
+          throw new Plain("This PDF couldn't be read. It may be damaged. Try another copy, or paste the recipe in.");
+        }
+        if (text.replace(/\s/g, "").length < 40) {
+          if (!ocr) throw new Plain("This PDF looks like a scan or a photo, so there's no text in it. Use Take a photo instead, or paste the recipe in.");
+          let t2; try { t2 = await ocrPdf(buf, pdfjs, ocr.makeWorker, ocr.onProgress, ocr.makeCanvas); }
+          catch (e) { throw new Plain("This PDF is a scan and the photo reader couldn't run here. Type or paste the recipe in."); }
+          if (t2.replace(/\s/g, "").length < 20) throw new Plain("This PDF is a scan and no writing could be read from it. Type or paste the recipe in.");
+          return Object.assign(photoRecipe(t2, nm.replace(/\.[^.]+$/, "")), { kind: "scan" });
+        }
+      }
+    } catch (e) {
+      if (e instanceof Plain) throw e;
+      if (e && /20 MB|Word file|docx|compression/.test(e.message || "")) throw new Plain(e.message);
+      throw new Plain("That file couldn't be read. Paste the recipe in instead.");
     }
-    else if (/^doc$/i.test(ext)) throw new Error("Older Word .doc files can't be read. Open it in Word and save it as .docx, or as a PDF.");
-    else throw new Error("Pick a PDF or a Word .docx file.");
-    const r = textToRecipe(text, nm);
-    if (!r.ingredients.length) throw new Error("The file was read, but no ingredient list was found. Paste the ingredients in below.");
+    const r = textToRecipe(text, nm, { paragraphs: kind === "docx" });
+    if (!r.ingredients.length) throw new Plain("The file was read, but no ingredient list was found. Paste the ingredients in below.");
     return Object.assign(r, { kind });
   }
 
-  const API = { textToRecipe, docxText, xmlParagraphs, pdfText, readRecipeFile, MAX_BYTES };
+  // ---------- Photos and scanned PDFs: Tesseract.js on the device ----------
+  const MAX_PHOTO = 25 * 1024 * 1024, MAX_SCAN_PAGES = 4;
+  // makeWorker(onProgress) returns a started Tesseract worker; it is always terminated afterwards.
+  async function ocrImages(images, makeWorker, onProgress) {
+    const w = await makeWorker(onProgress);
+    try { let out = ""; for (const im of images) out += (await w.recognize(im)).data.text + "\n"; return out; }
+    finally { try { await w.terminate(); } catch (e) {} }
+  }
+  // OCR text keeps line breaks but adds stray symbols; tidy the obvious ones before parsing.
+  function tidyOcr(t) {
+    return String(t || "").replace(/[|¦]/g, " ").replace(/^\s*[«»©®™°•·*~_=]+\s*/gm, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n");
+  }
+  // Text read from a photo: if the parser can't find the ingredient list, every line goes in the ingredients box
+  // so the user can sort it out; nothing read is thrown away.
+  function photoRecipe(text, name) {
+    const t = tidyOcr(text), r = textToRecipe(t, name || "");
+    if (!r.ingredients.length) {
+      const lines = t.split(/\n/).map(x => x.trim()).filter(x => x.length > 1).slice(0, 80);
+      return Object.assign(r, { ingredients: lines, steps: [], unsorted: true });
+    }
+    return r;
+  }
+  // prepare(file) opens the image on the device (and may shrink it); it throws if the file isn't a picture it can open.
+  async function readRecipePhoto(file, makeWorker, onProgress, prepare) {
+    const heic = /\.(heic|heif)$/i.test(file.name || "") || /hei[cf]/i.test(file.type || "");
+    if (!/^image\//.test(file.type || "") && !/\.(jpe?g|png|webp|gif|bmp|heic|heif)$/i.test(file.name || "")) throw new Plain("Pick a photo (JPEG or PNG).");
+    if (file.size > MAX_PHOTO) throw new Plain("That photo is over 25 MB. Take it again at a normal size.");
+    let img;
+    try { img = prepare ? await prepare(file) : file; }
+    catch (e) { throw new Plain(heic ? "This browser can't open HEIC photos. Take the picture with the button in the app, or on iPhone set Camera > Formats to Most Compatible." : "That file isn't a photo the app can open. Try a JPEG or PNG."); }
+    let text;
+    try { text = await ocrImages([img], makeWorker, onProgress); }
+    catch (e) { throw new Plain("The photo reader couldn't run here. Open the app from meals.guarinoindustries.com, or type the recipe in."); }
+    if (text.replace(/\s/g, "").length < 20) throw new Plain("No writing was found in that photo. Try again in good light, straight on, with the whole recipe in the frame.");
+    return Object.assign(photoRecipe(text, ""), { kind: "photo" });
+  }
+  // Scanned PDF: draw each page to a canvas with pdf.js, then read it like a photo.
+  async function ocrPdf(buf, pdfjs, makeWorker, onProgress, makeCanvas) {
+    const task = pdfjs.getDocument({ data: new Uint8Array(buf.slice(0)) });
+    try {
+      const doc = await task.promise, images = [];
+      for (let i = 1; i <= Math.min(doc.numPages, MAX_SCAN_PAGES); i++) {
+        const page = await doc.getPage(i), vp = page.getViewport({ scale: 2 });
+        const c = makeCanvas(Math.ceil(vp.width), Math.ceil(vp.height));
+        await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+        images.push(c);
+      }
+      return await ocrImages(images, makeWorker, onProgress);
+    } finally { try { await task.destroy(); } catch (e) {} }
+  }
+
+  const API = { photoRecipe, tidyOcr, readRecipePhoto, ocrPdf, MAX_PHOTO, textToRecipe, servingsFrom, docxText, xmlParagraphs, pdfText, readRecipeFile, MAX_BYTES, MAX_XML, MAX_PAGES, Plain };
   if (typeof module !== "undefined") module.exports = API; else root.RecipeFiles = API;
 })(typeof window !== "undefined" ? window : globalThis);
 
@@ -5331,19 +5461,59 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     m.GlobalWorkerOptions.workerSrc = new URL("pdf.worker.min.mjs", base).href;
     return m;
   }
+  // Tesseract.js (on-device text reading) sits in vendor/tesseract and loads only when a photo or scan is read.
+  function loadScript(src) { return new Promise((ok, bad) => { if (globalThis.Tesseract) return ok(); const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = () => bad(new Error("load")); document.head.appendChild(el); }); }
+  async function makeOcrWorker(onProgress) {
+    const base = new URL("vendor/tesseract/", location.href).href;
+    await loadScript(base + "tesseract.min.js");
+    return Tesseract.createWorker("eng", 1, { workerPath: base + "worker.min.js", corePath: base + "core", langPath: base + "lang",
+      logger: m => { if (onProgress && m && typeof m.progress === "number") onProgress(m.status, m.progress); } });
+  }
+  function ocrProgress(st) {
+    return (what, p) => { st.textContent = (/recogniz/i.test(what) ? "Reading the writing… " : "Getting the photo reader ready… ") + Math.round(p * 100) + "%"; };
+  }
+  // Open the photo on the device; phone photos are shrunk so the long side is at most 2200 px (faster, same accuracy).
+  async function preparePhoto(file) {
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, 2200 / Math.max(bmp.width, bmp.height));
+    const c = makeCanvas(Math.round(bmp.width * k), Math.round(bmp.height * k));
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height); if (bmp.close) bmp.close();
+    return c;
+  }
+  function makeCanvas(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+  let impUndo = null;
+  // Fill the boxes for the user to check. What was there before can be put back with Undo.
+  function fillImport(r, from) {
+    const ids = ["impName", "impServes", "impIngs", "impSteps"], before = ids.map(id => $("#" + id).value);
+    $("#impName").value = r.name; $("#impServes").value = parseInt(r.yield, 10) || 4;
+    $("#impIngs").value = r.ingredients.join("\n"); $("#impSteps").value = r.steps.join("\n");
+    $("#impPasteBox").open = true;
+    impUndo = before.some(Boolean) ? () => { ids.forEach((id, i) => { $("#" + id).value = before[i]; }); $("#impUndoRow").hidden = true; impUndo = null; } : null;
+    $("#impUndoRow").hidden = !impUndo;
+    const st = $("#impStatus");
+    st.textContent = r.unsorted
+      ? "Read the writing from " + from + ", but couldn't tell the ingredients from the steps. Everything is in the Ingredients box: move the steps to the Steps box, fix any mistakes, then tap Check ingredients."
+      : "Read " + r.ingredients.length + " ingredient" + (r.ingredients.length === 1 ? "" : "s") + " and " + r.steps.length + " step" + (r.steps.length === 1 ? "" : "s") + " from " + from + ". " + (r.kind === "photo" || r.kind === "scan" ? "Photo reading makes mistakes, so check every line below, " : "Check them below, ") + "then tap Check ingredients.";
+    st.className = "status ok";
+  }
   async function importFromFile() {
     const el = $("#impFile"), f = el.files && el.files[0], st = $("#impStatus");
     if (!f) return;
     st.textContent = "Reading " + f.name + "…"; st.className = "status";
     try {
-      const r = await RecipeFiles.readRecipeFile(f, loadPdfjs);
-      $("#impName").value = r.name; $("#impServes").value = parseInt(r.yield, 10) || 4;
-      $("#impIngs").value = r.ingredients.join("\n"); $("#impSteps").value = r.steps.join("\n");
-      $("#impPasteBox").open = true;
-      st.textContent = "Read " + r.ingredients.length + " ingredient" + (r.ingredients.length === 1 ? "" : "s") + " and " + r.steps.length + " step" + (r.steps.length === 1 ? "" : "s") + " from " + f.name + ". Check them below, then tap Check ingredients."; st.className = "status ok";
+      const r = await RecipeFiles.readRecipeFile(f, loadPdfjs, { makeWorker: makeOcrWorker, onProgress: ocrProgress(st), makeCanvas });
+      fillImport(r, f.name);
     } catch (e) {
-      st.textContent = e && e.message ? e.message : "That file couldn't be read. Paste the recipe in instead."; st.className = "status bad";
+      st.textContent = (e && e.message ? e.message : "That file couldn't be read. Paste the recipe in instead.") + " Nothing in the boxes below was changed."; st.className = "status bad";
     } finally { el.value = ""; }
+  }
+  async function importFromPhoto() {
+    const el = $("#impPhoto"), f = el.files && el.files[0], st = $("#impStatus");
+    if (!f) return;
+    st.textContent = "Getting the photo reader ready…"; st.className = "status";
+    try { fillImport(await RecipeFiles.readRecipePhoto(f, makeOcrWorker, ocrProgress(st), preparePhoto), "the photo"); }
+    catch (e) { st.textContent = (e && e.message ? e.message : "That photo couldn't be read. Type the recipe in instead.") + " Nothing in the boxes below was changed."; st.className = "status bad"; }
+    finally { el.value = ""; }
   }
   function importFromPaste() {
     const lines = $("#impIngs").value.split(/\n+/).map(s => s.replace(/^[-*•\s]+/, "").trim()).filter(Boolean);
@@ -5537,6 +5707,8 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $("#impUrl").addEventListener("keydown", e => { if (e.key === "Enter") importFromUrl(); });
     $("#impParse").addEventListener("click", importFromPaste);
     $("#impFile").addEventListener("change", importFromFile);
+    $("#impPhoto").addEventListener("change", importFromPhoto);
+    $("#impUndo").addEventListener("click", () => { if (impUndo) impUndo(); $("#impStatus").textContent = "Put back what was in the boxes."; $("#impStatus").className = "status"; });
     $("#flavorBack").addEventListener("click", showQuestion);
     $("#importSheet").addEventListener("click", e => { if (e.target.id === "importSheet") closeImport(); });
     $("#cookClose").addEventListener("click", closeCook);
