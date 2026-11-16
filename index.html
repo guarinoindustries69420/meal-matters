@@ -14,7 +14,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 var(--body)}
-h1,h2,h3,.sec,.choice span,#question h2{font-family:var(--display);letter-spacing:-.01em}
+h1,h2,h3,.sec,.choice span,#question h2,#flavor h2{font-family:var(--display);letter-spacing:-.01em}
 body.locked{overflow:hidden}
 header{padding:18px 0 6px;max-width:1076px;margin:0 auto}
 @media (max-width:1100px){header{padding:18px 12px 6px}}
@@ -148,7 +148,7 @@ ol.steps{list-style:none;padding:0;margin:0}
 .wordmark .w2{font-size:.95rem;font-weight:600;letter-spacing:.32em;color:var(--muted)}
 .presents{margin-top:18px;color:var(--accent);font-weight:700;letter-spacing:.06em}
 #question{width:100%;max-width:520px;animation:fadein .4s ease}
-#question h2{font-size:2rem;font-weight:800;text-align:center;margin:0 0 18px;color:var(--accent)}
+#question h2,#flavor h2{font-size:2rem;font-weight:800;text-align:center;margin:0 0 18px;color:var(--accent)}#flavors .choice:last-child{grid-column:auto}#flavors .choice:first-child{grid-column:1/-1}
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .choice{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:0;padding:12px;border:0;background:var(--accent);border-radius:16px;cursor:pointer;min-height:104px;text-align:left;color:#fff}
 .choice img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -157,6 +157,7 @@ ol.steps{list-style:none;padding:0;margin:0}
 .choice span{font-size:1.2rem;font-weight:800}
 .choice small{font-size:.8rem;opacity:.92}
 .choice:last-child{grid-column:1/-1}
+.flavorfor{text-align:center;color:var(--muted);margin:-6px 0 12px;font-weight:600}
 .planlink{text-align:center;margin-top:16px;color:var(--muted);font-size:.92rem}
 .choice:hover img{transform:scale(1.04)}.choice img{transition:transform .3s}
 @media (prefers-reduced-motion:reduce){.choice img{transition:none}}
@@ -547,6 +548,12 @@ footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
     <h2>What are we having today?</h2>
     <div id="choices" class="choices"></div>
     <p class="planlink">Planning ahead? <button type="button" class="link" id="planInstead">Plan my week instead</button></p>
+  </div>
+  <div id="flavor" hidden>
+    <h2>What's your flavor?</h2>
+    <p class="flavorfor" id="flavorFor"></p>
+    <div id="flavors" class="choices"></div>
+    <p class="planlink"><button type="button" class="link" id="flavorBack">Back to meals</button></p>
   </div>
 </div>
 
@@ -4962,9 +4969,25 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     { label: "Show me everything", pic: "sheet-pan-chicken-legs" },
   ];
   // Count with the user's current settings (servings, time, budget, equipment, allergens), so the number matches the list they land on.
-  function countFor(ch) { return Logic.search(Object.assign({}, readOpts(), { meals: ch.meals || [], diets: ch.diets || [], airFryer: !!ch.air, query: "", saleOnly: false }, ch.label === "Show me everything" ? { maxMinutes: 0 } : {}), ctx()).filter(c => !ch.favs || isFav(c.recipe.id)).length; }
+  function choiceResults(ch) { return Logic.search(Object.assign({}, readOpts(), { meals: ch.meals || [], diets: ch.diets || [], cuisines: ch.cuisine ? [ch.cuisine] : [], airFryer: !!ch.air, query: "", saleOnly: false }, ch.label === "Show me everything" ? { maxMinutes: 0 } : {}), ctx()).filter(c => !ch.favs || isFav(c.recipe.id)); }
+  function countFor(ch) { return choiceResults(ch).length; }
+  // Cuisines that have at least one recipe for this choice, most recipes first.
+  function cuisinesFor(ch) {
+    return $$('input[name="cuisine"]').map(x => x.value).map(c => ({ c, list: choiceResults(Object.assign({}, ch, { cuisine: c })) }))
+      .filter(x => x.list.length).sort((a, b) => b.list.length - a.list.length);
+  }
+  // Second screen: "What's your flavor?" Only shown when there's more than one cuisine to pick from.
+  function showFlavor(ch, cs) {
+    $("#question").hidden = true; $("#flavor").hidden = false;
+    $("#flavorFor").textContent = ch.label === "Show me everything" ? "Any meal" : ch.label;
+    const tiles = [{ label: "Surprise me", n: countFor(ch), pic: ch.pic, cuisine: "" }].concat(cs.map(x => ({ label: x.c, n: x.list.length, pic: (x.list.find(r => photo(r.recipe.id)) || x.list[0]).recipe.id, cuisine: x.c })));
+    $("#flavors").innerHTML = tiles.map((t, i) => '<button type="button" class="choice" data-i="' + i + '">' + (photo(t.pic) ? '<img src="' + photo(t.pic) + '" alt="">' : "") + "<span>" + esc(t.label) + "</span><small>" + (t.cuisine ? t.n + (t.n === 1 ? " recipe" : " recipes") : "any cuisine, " + t.n + " recipes") + "</small></button>").join("");
+    $$("#flavors .choice").forEach(b => b.addEventListener("click", () => { const t = tiles[+b.dataset.i]; pick(Object.assign({}, ch, { cuisine: t.cuisine, flavorDone: true })); }));
+    $("#splash").scrollTop = 0;
+    const first = $("#flavors .choice"); if (first) first.focus();
+  }
   function showQuestion() {
-    $("#splashLogo").hidden = true; $("#question").hidden = false; $("#splash").classList.remove("dark");
+    $("#splashLogo").hidden = true; $("#question").hidden = false; $("#flavor").hidden = true; $("#splash").classList.remove("dark");
     const nf = Object.keys(state.favs).length;
     const list = (nf ? [{ label: "My favorites", favs: true, pic: Object.keys(state.favs)[0] }] : []).concat(CHOICES, [{ label: "What can I make now?", now: true, pic: "chicken-fried-rice" }]);
     state.choiceList = list;
@@ -4974,6 +4997,8 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   }
   function pick(ch) {
     if (ch.now) return makeNow();
+    if (!ch.flavorDone && !ch.favs && ch.label !== "Show me everything") { const cs = cuisinesFor(ch); if (cs.length >= 2) return showFlavor(ch, cs); }
+    $$('input[name="cuisine"]').forEach(x => x.checked = !!ch.cuisine && x.value === ch.cuisine);
     if ($("#sort").value === "pantry") $("#sort").value = "cheapest";
     $$('input[name="meal"]').forEach(x => x.checked = (ch.meals || []).includes(x.value));
     $$('input[name="diet"]').forEach(x => x.checked = (ch.diets || []).includes(x.value));
@@ -4981,14 +5006,14 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $("#airOnly").checked = !!ch.air;
     if (ch.label === "Show me everything") $("#maxTime").value = "0"; // everything means no time limit too
     state.pick = ch.label;
-    $("#pickLabel").textContent = ch.label === "Show me everything" ? "Everything" : ch.label;
+    $("#pickLabel").textContent = ch.cuisine ? ch.cuisine + (ch.label === "Show me everything" ? " food" : " " + ch.label.toLowerCase()) : ch.label === "Show me everything" ? "Everything" : ch.label;
     $("#splash").hidden = true; document.body.classList.remove("locked");
     showTab("recipes"); render();
   }
   function openSplash(skipLogo) {
     $("#splash").hidden = false; document.body.classList.add("locked");
     if (skipLogo) return showQuestion();
-    $("#splashLogo").hidden = false; $("#question").hidden = true; $("#splash").classList.add("dark");
+    $("#splashLogo").hidden = false; $("#question").hidden = true; $("#flavor").hidden = true; $("#splash").classList.add("dark");
     const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const t = setTimeout(showQuestion, reduce ? 600 : 1600);
     $("#splashLogo").onclick = () => { clearTimeout(t); showQuestion(); };
@@ -5512,6 +5537,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $("#impUrl").addEventListener("keydown", e => { if (e.key === "Enter") importFromUrl(); });
     $("#impParse").addEventListener("click", importFromPaste);
     $("#impFile").addEventListener("change", importFromFile);
+    $("#flavorBack").addEventListener("click", showQuestion);
     $("#importSheet").addEventListener("click", e => { if (e.target.id === "importSheet") closeImport(); });
     $("#cookClose").addEventListener("click", closeCook);
     $("#cookNext").addEventListener("click", cookNext);
