@@ -102,7 +102,7 @@ ol{padding-left:22px}ol li{margin:6px 0}
 .btn{border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);border-radius:12px;font-weight:700;padding:9px 14px;cursor:pointer;min-height:42px}
 .btn.ghost{background:transparent;color:var(--accent)}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.status{font-size:.88rem;margin-top:10px;color:var(--muted)}.status.bad{color:var(--sale)}
+.status{font-size:.88rem;margin-top:10px;color:var(--muted)}.status.bad{color:var(--sale)}.status.ok{color:var(--accent);font-weight:600}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:10}
 nav.tabs button{flex:1;max-width:190px;border:0;background:none;padding:12px 4px;font-size:.85rem;color:var(--muted);cursor:pointer;min-height:52px}
 nav.tabs button[aria-current=page]{color:var(--accent);font-weight:700;box-shadow:inset 0 3px 0 var(--accent)}
@@ -572,6 +572,8 @@ footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
       <label class="f">Recipe web address<input id="impUrl" type="url" placeholder="https://" autocomplete="off" inputmode="url"></label>
       <div class="btns"><button type="button" class="btn" id="impFetch">Get recipe</button><button type="button" class="btn ghost" id="impCancel">Cancel</button></div>
       <p class="status" id="impStatus" role="status"></p>
+      <label class="f filepick">Or pick a recipe file (PDF or Word)<input id="impFile" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label>
+      <p class="hint">The file is read on this device. Nothing is uploaded.</p>
       <details id="impPasteBox"><summary>Or paste it in</summary>
         <label class="f">Recipe name<input id="impName" type="text"></label>
         <label class="f">Servings<input id="impServes" type="number" min="1" max="50" value="4" inputmode="numeric"></label>
@@ -3810,6 +3812,10 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   // Words that point to catalog items; first match wins, longest phrases first.
   const ALIASES = {
     "chicken breast": "chickenBreast", "chicken breasts": "chickenBreast", "chicken thigh": "chickenBreast", "chicken legs": "chickenLegs", "drumstick": "chickenLegs", "whole chicken": "wholeChicken",
+    "ground turkey": "groundTurkey", "lean ground beef": "leanBeef", "extra-lean ground beef": "leanBeef", "turkey bacon": "turkeyBacon",
+    "brown rice": "brownRice", "cauliflower rice": "cauliflowerRice", "riced cauliflower": "cauliflowerRice", "whole wheat pasta": "wwPasta", "whole-wheat pasta": "wwPasta",
+    "whole wheat bread": "wwBread", "whole-wheat bread": "wwBread", "low-sodium chicken broth": "lowSodiumBroth", "low sodium chicken broth": "lowSodiumBroth",
+    "skim milk": "skimMilk", "fat-free milk": "skimMilk", "nonfat milk": "skimMilk",
     "ground beef": "groundBeef", "stew meat": "stewBeef", "sirloin": "sirloin", "steak": "sirloin", "bacon": "bacon", "pork chop": "porkChops", "ham": "ham",
     "salmon": "salmon", "shrimp": "shrimp", "tofu": "tofu", "egg": "eggs", "eggs": "eggs", "milk": "milk", "butter": "butter", "heavy cream": "heavyCream", "cream": "heavyCream",
     "sour cream": "sourCream", "yogurt": "yogurt", "cheddar": "cheddar", "mozzarella": "mozzarella", "parmesan": "parmesan", "ricotta": "ricotta", "cheese": "cheddar",
@@ -4024,6 +4030,165 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   const API = { pantryMatch, scoreParts, medianCostPerServing, ACTIVITY, MODES, goalTargets, goalRank, BOOSTERS, leftovers, useUpSuggestions, parseLine, matchKey, toCatalogUnits, importLines, isoMinutes, recipeFromImport, rawFlags, cleanImported, words, MAX_LINES, MAX_LEN, NEVER_SAFE, SAFE };
   if (typeof module !== "undefined") module.exports = API; else globalThis.Features = API;
 })();
+
+// Recipe files (PDF and Word .docx) read on the device, then turned into the same
+// { name, ingredients, steps, yield } shape the paste importer uses. Nothing is uploaded.
+// Scanned PDFs have no text layer; they get a clear message (an AI reader is planned with the server).
+(function (root) {
+  const MAX_BYTES = 15 * 1024 * 1024;   // largest file accepted
+  const MAX_XML = 20 * 1024 * 1024;     // largest unzipped document.xml (guards against zip bombs)
+  const MAX_PAGES = 20;                 // PDF pages read
+
+  // ---------- Word .docx: a zip holding word/document.xml ----------
+  async function inflateRaw(bytes, limit) {
+    const ds = new DecompressionStream("deflate-raw");
+    const reader = new Blob([bytes]).stream().pipeThrough(ds).getReader();
+    const parts = []; let total = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.length;
+      if (total > limit) { try { reader.cancel(); } catch (e) {} throw new Error("This file unpacks to more than 20 MB, which is too big for a recipe."); }
+      parts.push(value);
+    }
+    const out = new Uint8Array(total); let o = 0;
+    for (const p of parts) { out.set(p, o); o += p.length; }
+    return out;
+  }
+  async function docxXml(buf) {
+    const b = new Uint8Array(buf), v = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    if (b.length < 22 || v.getUint32(0, true) !== 0x04034b50) throw new Error("This doesn't look like a Word .docx file.");
+    // End of central directory: scan back from the end (comment can be up to 64 KB).
+    let e = -1;
+    for (let i = b.length - 22; i >= Math.max(0, b.length - 22 - 65535); i--) if (v.getUint32(i, true) === 0x06054b50) { e = i; break; }
+    if (e < 0) throw new Error("This Word file looks damaged.");
+    const count = v.getUint16(e + 10, true); let p = v.getUint32(e + 16, true);
+    for (let n = 0; n < count && p + 46 <= b.length && v.getUint32(p, true) === 0x02014b50; n++) {
+      const method = v.getUint16(p + 10, true), csize = v.getUint32(p + 20, true), nlen = v.getUint16(p + 28, true);
+      const xlen = v.getUint16(p + 30, true), clen = v.getUint16(p + 32, true), local = v.getUint32(p + 42, true);
+      const name = new TextDecoder().decode(b.subarray(p + 46, p + 46 + nlen));
+      if (name === "word/document.xml") {
+        if (local + 30 > b.length || v.getUint32(local, true) !== 0x04034b50) throw new Error("This Word file looks damaged.");
+        const start = local + 30 + v.getUint16(local + 26, true) + v.getUint16(local + 28, true);
+        const data = b.subarray(start, start + csize);
+        const raw = method === 0 ? data : method === 8 ? await inflateRaw(data, MAX_XML) : null;
+        if (!raw) throw new Error("This Word file uses compression the app can't read.");
+        return new TextDecoder().decode(raw);
+      }
+      p += 46 + nlen + xlen + clen;
+    }
+    throw new Error("No document text was found in this Word file.");
+  }
+  const ENT = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+  const unxml = s => s.replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (m, g) => g[0] === "#" ? String.fromCodePoint(g[1] === "x" || g[1] === "X" ? parseInt(g.slice(2), 16) : +g.slice(1)) : ENT[g] || m);
+  // Paragraphs in order; tabs and line breaks kept as spaces and new lines.
+  function xmlParagraphs(xml) {
+    const body = xml.replace(/<w:(del|moveFrom|instrText|delText)\b[^>]*>[\s\S]*?<\/w:\1>/g, "");
+    return body.split(/<\/w:p>/).map(par => {
+      let t = "";
+      par.replace(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>|<w:(tab|br|cr)\b[^>]*\/>/g, (m, txt, tag) => { t += txt != null ? unxml(txt) : tag === "tab" ? " " : "\n"; return ""; });
+      return t;
+    }).join("\n");
+  }
+  async function docxText(buf) { return xmlParagraphs(await docxXml(buf)); }
+
+  // ---------- PDF, through pdf.js (loaded only when needed) ----------
+  async function pdfText(buf, pdfjs) {
+    const doc = await pdfjs.getDocument({ data: new Uint8Array(buf), isEvalSupported: false }).promise;
+    let out = "";
+    for (let i = 1; i <= Math.min(doc.numPages, MAX_PAGES); i++) {
+      const tc = await (await doc.getPage(i)).getTextContent();
+      let lastY = null;
+      for (const it of tc.items) {
+        const y = it.transform ? Math.round(it.transform[5]) : null;
+        if (lastY !== null && y !== null && Math.abs(y - lastY) > 2 && !out.endsWith("\n")) out += "\n";
+        out += it.str; if (it.hasEOL) out += "\n";
+        if (y !== null) lastY = y;
+      }
+      out += "\n";
+    }
+    return { text: out, pages: doc.numPages };
+  }
+
+  // ---------- Text to recipe ----------
+  const H_ING = /^(?:ingredients?|what you(?:'|’)?ll need|you(?:'|’)?ll need|you will need)\s*:?$/i;
+  const H_STEP = /^(?:directions?|instructions?|method|preparation|steps?|how to make(?: it)?|procedure)\s*:?$/i;
+  const H_END = /^(?:notes?|tips?|cook(?:'|’)?s notes?|nutrition(?: facts| information| info)?|storage|to store|serving suggestions?|equipment|recipe notes?)\s*:?$/i;
+  const META = /^(?:prep(?:aration)? time|cook(?:ing)? time|total time|ready in|serves|servings|yield|makes|difficulty|course|cuisine|author|by\b|source|calories)\b/i;
+  const QTY = /^(?:\d|[½⅓⅔¼¾⅛⅜⅝⅞]|(?:a|an|one|two|three|four|five|six|half|pinch|dash|handful|few|several|some|salt|pepper|fresh|juice of|zest of)\b)/i;
+  const NUMSTEP = /^(?:step\s*)?(\d{1,2})\s*[.):]\s+|^step\s*(\d{1,2})\s*$/i;
+  // Bullets come in many shapes; PDFs made from Word often use a private symbol-font character (U+F0B7).
+  const clean = l => l.replace(/[\ue000-\uf8ff]/g, " ").replace(/[\u00a0\t]+/g, " ").replace(/^\s*(?:[-*\u2022\u25aa\u25e6\u00b7\u25cb\u25cf\u25a0\u25a1\u2713\u2714\u2023\u2043\u27a2\u25ba\u25b6]|\(\s*\)|\[\s*\])\s*/, "").replace(/\s+/g, " ").trim();
+  function textToRecipe(text, filename) {
+    const lines = String(text || "").split(/\r?\n/).map(clean).filter(Boolean);
+    const name0 = String(filename || "").replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+    const all = lines.join("\n");
+    const y = /(?:serves|servings|yield|makes)\s*:?\s*(?:about\s*)?(\d{1,3})/i.exec(all);
+    let iH = lines.findIndex(l => H_ING.test(l)), sH = lines.findIndex((l, k) => k > iH && H_STEP.test(l));
+    let ing = [], steps = [], name = "";
+    // Where the recipe body begins: the first heading, or with no headings the first quantity line.
+    const qStart = lines.findIndex(l => QTY.test(l) && l.length < 90 && !META.test(l));
+    const firstHead = iH >= 0 || sH >= 0 ? Math.min(...[iH, sH].filter(k => k >= 0)) : qStart >= 0 ? qStart : lines.length;
+    name = lines.slice(0, firstHead).find(l => l.length >= 3 && l.length <= 80 && !META.test(l) && !/^page \d/i.test(l) && !/^https?:/i.test(l)) || name0 || "My recipe";
+    const cut = (from, to) => { const out = []; for (let k = from; k < to; k++) { if (H_END.test(lines[k]) || H_STEP.test(lines[k])) break; out.push(lines[k]); } return out; };
+    if (iH >= 0) {
+      ing = cut(iH + 1, sH >= 0 ? sH : lines.length).filter(l => !META.test(l));
+      steps = sH >= 0 ? cut(sH + 1, lines.length) : [];
+      if (sH < 0) { // no steps heading: long sentences after the ingredients are steps
+        const k = ing.findIndex((l, n) => n > 0 && !QTY.test(l) && l.length > 50);
+        if (k > 0) { steps = ing.slice(k); ing = ing.slice(0, k); }
+      }
+    } else {
+      // No headings: quantity lines are ingredients, longer sentences after them are steps.
+      const start = qStart;
+      if (start >= 0) {
+        let k = start;
+        while (k < lines.length && ((QTY.test(lines[k]) && lines[k].length < 90) || lines[k].endsWith(":") && lines[k].length < 40)) k++;
+        ing = lines.slice(start, k); steps = lines.slice(k).filter(l => !H_END.test(l) && !META.test(l));
+        const endAt = steps.findIndex(l => H_END.test(l)); if (endAt >= 0) steps = steps.slice(0, endAt);
+      }
+    }
+    // Ingredients: drop sub-headings ("For the sauce:"), join a wrapped line onto the one before it.
+    const ingOut = [];
+    for (const l of ing) {
+      if (/:$/.test(l) && l.length < 40 && !QTY.test(l)) continue;
+      if (ingOut.length && /^[a-z(]/.test(l) && !QTY.test(l)) ingOut[ingOut.length - 1] += " " + l; else ingOut.push(l);
+    }
+    // Steps: a number starts a step; otherwise a line that doesn't end a sentence continues the step.
+    const stOut = []; let open = false;
+    for (const l0 of steps) {
+      const m = NUMSTEP.exec(l0); const l = l0.replace(NUMSTEP, "").trim();
+      if (!l) { open = false; continue; }
+      if (m || !open || !stOut.length) stOut.push(l); else stOut[stOut.length - 1] += " " + l;
+      open = !/[.!?)]$/.test(l);
+      if (m) open = !/[.!?)]$/.test(l);
+    }
+    return { name: name.slice(0, 120), ingredients: ingOut.slice(0, 80), steps: stOut.slice(0, 40), yield: y ? y[1] : "", found: { ingredientsHeading: iH >= 0, stepsHeading: sH >= 0 } };
+  }
+
+  // ---------- One entry point for the screen ----------
+  async function readRecipeFile(file, loadPdfjs) {
+    const nm = String(file.name || ""), ext = (/\.([a-z0-9]+)$/i.exec(nm) || [])[1] || "";
+    if (file.size > MAX_BYTES) throw new Error("That file is over 15 MB. Recipe files are usually much smaller.");
+    const buf = await file.arrayBuffer();
+    let text = "", kind;
+    if (/^docx$/i.test(ext) || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") { kind = "docx"; text = await docxText(buf); }
+    else if (/^pdf$/i.test(ext) || file.type === "application/pdf") {
+      kind = "pdf";
+      let pdfjs; try { pdfjs = await loadPdfjs(); } catch (e) { throw new Error("The PDF reader couldn't load. Open the app from meals.guarinoindustries.com and try again, or paste the recipe in."); }
+      text = (await pdfText(buf, pdfjs)).text;
+      if (text.replace(/\s/g, "").length < 40) throw new Error("This PDF looks like a scan or a photo, so there's no text to read. For now, type or paste the recipe in. Reading scans is coming.");
+    }
+    else if (/^doc$/i.test(ext)) throw new Error("Older Word .doc files can't be read. Open it in Word and save it as .docx, or as a PDF.");
+    else throw new Error("Pick a PDF or a Word .docx file.");
+    const r = textToRecipe(text, nm);
+    if (!r.ingredients.length) throw new Error("The file was read, but no ingredient list was found. Paste the ingredients in below.");
+    return Object.assign(r, { kind });
+  }
+
+  const API = { textToRecipe, docxText, xmlParagraphs, pdfText, readRecipeFile, MAX_BYTES };
+  if (typeof module !== "undefined") module.exports = API; else root.RecipeFiles = API;
+})(typeof window !== "undefined" ? window : globalThis);
 
 // UI wiring. Uses CATALOG, RECIPES, BLS (data.js) and Logic (logic.js).
 (function () {
@@ -5134,6 +5299,27 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       st.className = "status bad"; $("#impPasteBox").open = true;
     }
   }
+  // pdf.js sits next to the page (vendor/pdfjs) and is only fetched when someone picks a PDF.
+  async function loadPdfjs() {
+    const base = new URL("vendor/pdfjs/", location.href);
+    const m = await import(new URL("pdf.min.mjs", base).href);
+    m.GlobalWorkerOptions.workerSrc = new URL("pdf.worker.min.mjs", base).href;
+    return m;
+  }
+  async function importFromFile() {
+    const el = $("#impFile"), f = el.files && el.files[0], st = $("#impStatus");
+    if (!f) return;
+    st.textContent = "Reading " + f.name + "…"; st.className = "status";
+    try {
+      const r = await RecipeFiles.readRecipeFile(f, loadPdfjs);
+      $("#impName").value = r.name; $("#impServes").value = parseInt(r.yield, 10) || 4;
+      $("#impIngs").value = r.ingredients.join("\n"); $("#impSteps").value = r.steps.join("\n");
+      $("#impPasteBox").open = true;
+      st.textContent = "Read " + r.ingredients.length + " ingredient" + (r.ingredients.length === 1 ? "" : "s") + " and " + r.steps.length + " step" + (r.steps.length === 1 ? "" : "s") + " from " + f.name + ". Check them below, then tap Check ingredients."; st.className = "status ok";
+    } catch (e) {
+      st.textContent = e && e.message ? e.message : "That file couldn't be read. Paste the recipe in instead."; st.className = "status bad";
+    } finally { el.value = ""; }
+  }
   function importFromPaste() {
     const lines = $("#impIngs").value.split(/\n+/).map(s => s.replace(/^[-*•\s]+/, "").trim()).filter(Boolean);
     if (!lines.length) { $("#impStatus").textContent = "Paste at least one ingredient line."; $("#impStatus").className = "status bad"; return; }
@@ -5325,6 +5511,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $("#impFetch").addEventListener("click", importFromUrl);
     $("#impUrl").addEventListener("keydown", e => { if (e.key === "Enter") importFromUrl(); });
     $("#impParse").addEventListener("click", importFromPaste);
+    $("#impFile").addEventListener("change", importFromFile);
     $("#importSheet").addEventListener("click", e => { if (e.target.id === "importSheet") closeImport(); });
     $("#cookClose").addEventListener("click", closeCook);
     $("#cookNext").addEventListener("click", cookNext);
