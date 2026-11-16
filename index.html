@@ -265,8 +265,14 @@ nav.tabs button{font-size:.74rem;padding:12px 2px}
 .msmain span{display:flex;flex-direction:column}.msmain small{color:var(--muted);font-size:.78rem}
 .chk.small{font-size:.8rem;padding:4px 8px;min-height:32px}
 details.adv{margin:12px 4px;font-size:.9rem}details.adv summary{color:var(--muted)}
-.methods{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;margin:6px 0 2px;background:var(--bg)}
-.meth{border:0;background:none;padding:8px 16px;border-radius:999px;font-weight:600;color:var(--muted);cursor:pointer;min-height:38px}
+.where{border:0;padding:0;margin:10px 0 0}.where legend{font-weight:700;font-size:.9rem;margin-bottom:6px;padding:0}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--bg);gap:2px}
+.seg label{display:flex;align-items:center;min-height:38px;padding:0 14px;border-radius:999px;font-weight:600;color:var(--muted);cursor:pointer}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+.seg label:has(input:checked){background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.methods{flex-wrap:wrap;display:inline-flex;border:1px solid var(--line);border-radius:22px;padding:3px;margin:6px 0 2px;background:var(--bg)}
+.meth{border:0;background:none;padding:8px 13px;border-radius:999px;font-weight:600;color:var(--muted);cursor:pointer;min-height:38px}
 .meth.on{background:var(--accent);color:#fff}
 footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
 </style>
@@ -297,6 +303,11 @@ footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
         <input id="zip" type="text" inputmode="numeric" maxlength="5" placeholder="e.g. 27609" autocomplete="postal-code">
       </label>
     </div>
+    <fieldset class="where"><legend>Cooking</legend><div class="seg" role="radiogroup">
+      <label><input type="radio" name="where" value="either" checked>Either</label>
+      <label><input type="radio" name="where" value="indoor">Indoors</label>
+      <label><input type="radio" name="where" value="outdoor">Outdoors</label>
+    </div><p class="hint" id="whereHint" hidden></p></fieldset>
     <p id="regionLine"></p>
     <div class="allergyrow" id="allergyRow">
 <fieldset><legend>Food allergies</legend><p class="hint" style="margin:0 0 6px">Recipes with any of these, and add-ins that contain them, are always left out. Saved on this device.</p><div class="chips">
@@ -342,6 +353,12 @@ footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
         <label><input type="checkbox" name="equip" value="slow cooker" checked>Slow cooker</label>
         <label><input type="checkbox" name="equip" value="air fryer" checked>Air fryer</label>
         <label><input type="checkbox" name="equip" value="toaster" checked>Toaster</label>
+      </div></fieldset>
+      <fieldset><legend>Outdoor gear I have</legend><div class="chips">
+        <label><input type="checkbox" name="equip" value="grill">Grill (gas or charcoal)</label>
+        <label><input type="checkbox" name="equip" value="griddle">Flat-top griddle</label>
+        <label><input type="checkbox" name="equip" value="smoker">Smoker</label>
+        <label><input type="checkbox" name="equip" value="campfire">Campfire or camp stove</label>
       </div></fieldset>
       <fieldset><legend>Meal</legend><div class="chips">
         <label><input type="checkbox" name="meal" value="breakfast">Breakfast</label>
@@ -1136,6 +1153,207 @@ if (typeof module !== "undefined") module.exports = globalThis.MEAL_MATTERS_DATA
     Object.assign(r, { when, flavors: x.fl, protein: x.protein, opt: x.opt, done: x.d, timers: x.t, keep: x.keep, tip: x.tip, swap: x.swap, pairs: x.pairs });
   }
   if (typeof module !== "undefined") module.exports = X;
+})();
+
+// Outdoor versions of recipes: grill, flat-top griddle, smoker, campfire or camp stove.
+// Same shape as the air fryer versions: s[i], d[i] ("done when") and t[i] (timer minutes, 0 = none)
+// line up one-to-one with the original recipe's steps. Safe internal temperatures match the originals
+// (USDA: poultry 165°F, ground beef 160°F, pork and fish 145°F; legs and thighs are cooked to 175°F for texture).
+(function () {
+  const D = typeof module !== "undefined" ? require("./data.js") : globalThis.MEAL_MATTERS_DATA;
+  const { RECIPES } = D;
+  const OUTDOOR_GEAR = { grill: "Grill", griddle: "Griddle", smoker: "Smoker", campfire: "Campfire" };
+  const V = (equip, cook, steps) => ({ equip, cook, s: steps.map(x => x[0]), d: steps.map(x => x[1]), t: steps.map(x => x[2]) });
+
+  const OUTDOOR = {
+    "cheeseburgers": {
+      grill: V(["grill"], 10, [
+        ["Shape the beef into four patties slightly wider than the buns and season both sides.", "Four patties, each about ¾ inch thick with a thumb dent in the middle.", 0],
+        ["Heat the grill to medium-high, about 400 to 450°F, and oil the grates. Grill the patties with the lid closed about 4 minutes per side.", "Each side has grill marks and the center reads 160°F.", 8],
+        ["Lay sliced cheddar on top for the last minute and close the lid. Toast the buns cut side down at the edge of the grill.", "Cheese is melted over the edges and the buns are lightly toasted.", 1],
+        ["Serve on the buns with lettuce, sliced tomato and onion.", "Burgers are built and served.", 0]]),
+      griddle: V(["griddle"], 8, [
+        ["Divide the beef into eight loose balls and season them. You'll stack two thin patties per burger.", "Eight balls, loosely packed, not pressed into patties.", 0],
+        ["Heat the griddle to high, about 450°F. Set the balls down and smash each one thin with a sturdy spatula. Cook 2 to 3 minutes, scrape and flip, then cook 1 to 2 minutes more.", "Edges are lacy and dark brown and the patties read 160°F.", 4],
+        ["Lay cheddar on half the patties for the last minute, then stack two per burger. Toast the buns on the griddle.", "Cheese is melted and the buns are golden.", 1],
+        ["Serve on the buns with lettuce, sliced tomato and onion.", "Burgers are built and served.", 0]]),
+      campfire: V(["campfire"], 12, [
+        ["Shape the beef into four patties slightly wider than the buns and season both sides.", "Four patties, each about ¾ inch thick with a thumb dent in the middle.", 0],
+        ["Set a grill grate over hot coals; you should only be able to hold your hand above them for about 4 seconds. Cook the patties about 5 minutes per side, moving them if flames flare up.", "Each side has a dark crust and the center reads 160°F.", 10],
+        ["Lay sliced cheddar on top for the last minute. Warm the buns at the edge of the grate.", "Cheese is melted and the buns are warm.", 1],
+        ["Serve on the buns with lettuce, sliced tomato and onion.", "Burgers are built and served.", 0]]),
+    },
+    "sheet-pan-chicken-legs": {
+      grill: V(["grill"], 45, [
+        ["Set up the grill for two zones, high heat on one side and none on the other. Aim for about 375 to 400°F with the lid closed.", "Grill holds about 375 to 400°F with one side unlit.", 0],
+        ["Cut the potatoes into chunks and the onion into wedges. Toss with half the oil, salt and pepper and seal them in a heavy-duty foil packet.", "Packet is sealed tight with the vegetables in one layer.", 0],
+        ["Rub the chicken with the rest of the oil, paprika, minced garlic, salt and pepper.", "Each leg is coated on all sides.", 0],
+        ["Grill the chicken skin side up on the unlit side with the lid closed, and the potato packet over the heat, flipping the packet halfway. Move the chicken over the heat for the last few minutes to crisp the skin.", "Skin is golden and crisp, the thickest leg reads 175°F near the bone, and the potatoes are tender.", 45],
+        ["Squeeze the lemon over everything before serving.", "Lemon is squeezed over everything.", 0]]),
+      smoker: V(["smoker"], 100, [
+        ["Heat the smoker to 275°F.", "Smoker holds steady at 275°F.", 0],
+        ["Cut the potatoes into chunks and the onion into wedges. Toss with half the oil, salt and pepper and spread in a foil pan.", "Vegetables lie in one layer in the pan.", 0],
+        ["Rub the chicken with the rest of the oil, paprika, minced garlic, salt and pepper.", "Each leg is coated on all sides.", 0],
+        ["Smoke the chicken and the pan of vegetables about 1½ to 2 hours, stirring the vegetables once, until the chicken reaches 175°F.", "Thickest leg reads 175°F near the bone, the skin is deep mahogany, and the potatoes are tender.", 100],
+        ["Squeeze the lemon over everything before serving.", "Lemon is squeezed over everything.", 0]]),
+    },
+    "baked-salmon": {
+      grill: V(["grill", "stovetop"], 25, [
+        ["Start the rice on the stove or a side burner. Heat the grill to medium-high, about 400°F.", "Grill is hot and the rice is simmering.", 0],
+        ["Set the salmon skin side down on heavy-duty foil. Top with melted butter, garlic, salt, pepper and lemon slices.", "Each fillet is topped with butter, garlic and lemon.", 0],
+        ["Toss the broccoli florets with a little of the butter and salt and seal them in a second foil packet.", "Broccoli packet is sealed tight.", 0],
+        ["Grill both with the lid closed for 12 to 15 minutes, until the salmon flakes easily.", "Salmon flakes with a fork and reads 145°F, and the broccoli is tender.", 14]]),
+      smoker: V(["smoker", "stovetop"], 70, [
+        ["Heat the smoker to 225°F. Start the rice on the stove about 30 minutes before the fish is done.", "Smoker holds steady at 225°F.", 0],
+        ["Set the salmon skin side down on a foil-lined rack. Top with melted butter, garlic, salt, pepper and lemon slices.", "Each fillet is topped with butter, garlic and lemon.", 0],
+        ["Cut the broccoli into florets to steam on the stove while the salmon finishes.", "Florets are cut and ready to steam.", 0],
+        ["Smoke the salmon about 1 hour, until it flakes easily. Steam the broccoli for the last 5 minutes.", "Salmon flakes with a fork and reads 145°F, and the broccoli is bright green and tender.", 60]]),
+    },
+    "steak-potatoes": {
+      grill: V(["grill"], 35, [
+        ["Cut the potatoes small, toss with half the oil, salt and pepper, and seal in a heavy-duty foil packet. Grill over medium heat with the lid closed, turning once.", "A fork slides through the potatoes.", 25],
+        ["Season the steak well and let it sit while the potatoes cook.", "Steak surface looks dry and it has reached room temperature.", 0],
+        ["Brush the steak with the rest of the oil and grill over high heat, about 4 minutes per side for medium-rare.", "Grill marks form, and the center reads 130 to 135°F for medium-rare (USDA recommends 145°F).", 8],
+        ["Melt the butter with the garlic in a small foil pan at the edge of the grill and spoon it over the steak. Rest 5 minutes before slicing.", "Steak has rested 5 minutes and the juices stay on the board when sliced.", 5]]),
+      campfire: V(["campfire"], 40, [
+        ["Cut the potatoes small, toss with half the oil, salt and pepper, and seal in a double layer of heavy-duty foil. Set the packet on hot coals at the edge of the fire, turning it every 10 minutes with tongs.", "A fork slides through the potatoes.", 30],
+        ["Season the steak well and let it sit while the potatoes cook.", "Steak surface looks dry and it has reached room temperature.", 0],
+        ["Brush the steak with the rest of the oil and cook on a grate over hot coals, about 4 to 5 minutes per side for medium-rare.", "Dark crust forms, and the center reads 130 to 135°F for medium-rare (USDA recommends 145°F).", 9],
+        ["Top the steak with the butter and minced garlic and let it melt while the steak rests 5 minutes before slicing.", "Steak has rested 5 minutes and the juices stay on the board when sliced.", 5]]),
+    },
+    "pork-chops-apples": {
+      grill: V(["grill"], 22, [
+        ["Season the chops with salt and pepper. Heat the grill to medium-high.", "Both sides are seasoned and the grill is hot.", 0],
+        ["Grill the chops with the lid closed about 4 to 5 minutes per side, until they reach 145°F. Rest them on a plate.", "Chops have grill marks and read 145°F in the center. Rest them 3 minutes.", 9],
+        ["Put the sliced apples and onion on heavy-duty foil with the butter, fold it into a packet and grill until soft.", "Apples are soft and the onion is tender.", 12],
+        ["Open the packet, stir in the brown sugar and cinnamon, and spoon it over the chops.", "Sugar has melted into a glaze over the apples.", 0]]),
+    },
+    "chicken-romaine-salad": {
+      grill: V(["grill"], 15, [
+        ["Heat the grill to medium-high. Brush thick slices of the bread with a little oil, grill until marked, then tear into croutons.", "Bread is crisp with grill marks.", 3],
+        ["Season the chicken and grill with the lid closed, turning once, then slice it.", "Chicken reads 165°F and rests 5 minutes before slicing.", 12],
+        ["Whisk the rest of the oil with the lemon juice, mayo, grated garlic and half the parmesan.", "Dressing is creamy and doesn't separate.", 0],
+        ["Toss the chopped romaine with the dressing and top with chicken, croutons and the rest of the parmesan.", "Every leaf is lightly coated.", 0]]),
+    },
+    "air-fryer-chicken-sweet-potato": {
+      grill: V(["grill"], 30, [
+        ["Cut the sweet potatoes into cubes, toss with half the oil and salt, and seal in a heavy-duty foil packet. Grill over medium heat with the lid closed for 10 minutes.", "Sweet potatoes are starting to soften.", 10],
+        ["Rub the chicken with the rest of the oil, paprika, garlic powder, salt and pepper.", "Chicken is coated on all sides.", 0],
+        ["Grill the chicken over medium-high heat, flipping once, about 15 to 20 minutes while the sweet potatoes finish.", "Chicken reads 165°F in the thickest part and the sweet potatoes are tender.", 18]]),
+    },
+    "loaded-baked-potatoes": {
+      grill: V(["grill"], 60, [
+        ["Heat the grill to about 400°F. Scrub the potatoes, prick them, rub with salt and wrap each one in foil.", "Grill is hot and each potato is wrapped.", 0],
+        ["Grill with the lid closed about an hour, turning every 15 minutes, until soft.", "A fork slides in with no resistance.", 60],
+        ["Cook the bacon in a cast-iron pan on the grill and crumble it.", "Bacon is crisp and crumbles easily.", 8],
+        ["Split the potatoes and top with butter, shredded cheddar, sour cream, bacon and sliced green onions.", "Each potato is split and topped.", 0]]),
+      campfire: V(["campfire"], 55, [
+        ["Scrub the potatoes, prick them, rub with salt and wrap each in a double layer of heavy-duty foil.", "Each potato is wrapped twice.", 0],
+        ["Nestle them in hot coals, not flames, and cook 45 to 60 minutes, turning every 15 minutes with tongs.", "A fork slides through the foil and potato with no resistance.", 50],
+        ["Cook the bacon in a cast-iron pan on a grate over the fire and crumble it.", "Bacon is crisp and crumbles easily.", 8],
+        ["Split the potatoes and top with butter, shredded cheddar, sour cream, bacon and sliced green onions.", "Each potato is split and topped.", 0]]),
+    },
+    "baked-apples": {
+      grill: V(["grill"], 30, [
+        ["Heat the grill to medium, about 350°F. Core the apples from the top, leaving the bottoms intact.", "Each apple has a hollow about an inch wide and its bottom is intact.", 0],
+        ["Mix the oats, brown sugar, cinnamon and softened butter.", "Mixture clumps together when squeezed.", 0],
+        ["Stuff the apples, mound the rest on top, and wrap each one in heavy-duty foil.", "Each apple is wrapped with the filling on top.", 0],
+        ["Grill upright with the lid closed until tender, about 25 to 30 minutes.", "A knife slides into the apple easily.", 28]]),
+      campfire: V(["campfire"], 25, [
+        ["Core the apples from the top, leaving the bottoms intact.", "Each apple has a hollow about an inch wide and its bottom is intact.", 0],
+        ["Mix the oats, brown sugar, cinnamon and softened butter.", "Mixture clumps together when squeezed.", 0],
+        ["Stuff the apples, mound the rest on top, and wrap each one in a double layer of heavy-duty foil.", "Each apple is wrapped twice with the filling on top.", 0],
+        ["Set them upright in hot coals and cook until tender, about 20 to 30 minutes.", "A knife slides through the foil into the apple easily.", 25]]),
+    },
+    "roast-chicken": {
+      grill: V(["grill"], 85, [
+        ["Set up the grill for indirect heat at about 400°F, with the burners on the sides and none under the bird. Pat the chicken dry.", "Grill holds about 400°F and the skin is dry to the touch.", 0],
+        ["Rub it with softened butter, salt and pepper. Put the halved lemon and garlic inside.", "Whole bird is coated and the cavity is filled.", 0],
+        ["Set it breast side up in a foil roasting pan on a bed of chopped potatoes and carrots.", "Vegetables are spread under the chicken.", 0],
+        ["Grill over the unlit section with the lid closed about 75 to 90 minutes, until the thigh reaches 175°F. Rest 10 minutes before carving.", "Thigh reads 175°F, juices run clear, and the bird rests 10 minutes.", 80]]),
+      smoker: V(["smoker"], 180, [
+        ["Heat the smoker to 275°F. Pat the chicken dry.", "Smoker holds steady at 275°F and the skin is dry to the touch.", 0],
+        ["Rub it with softened butter, salt and pepper. Put the halved lemon and garlic inside.", "Whole bird is coated and the cavity is filled.", 0],
+        ["Toss the chopped potatoes and carrots with salt and pepper in a foil pan.", "Vegetables lie in one layer in the pan.", 0],
+        ["Smoke the chicken about 2½ to 3 hours, sliding the pan of vegetables under it for the last 1½ hours, until the thigh reaches 175°F. Rest 10 minutes before carving.", "Thigh reads 175°F, the breast at least 165°F, and the bird rests 10 minutes.", 170]]),
+    },
+    "chicken-quesadillas": {
+      griddle: V(["griddle"], 15, [
+        ["Heat the griddle to medium-high. Slice the chicken thin and cook it on the oiled griddle with the cumin and chili powder.", "Chicken is white all the way through and reads 165°F.", 6],
+        ["Cook the sliced pepper and onion next to it until soft.", "Peppers and onion are soft.", 4],
+        ["Fill each tortilla on one half with chicken, vegetables and shredded cheddar, then fold.", "Each tortilla is folded with filling spread evenly.", 0],
+        ["Turn the griddle to medium and cook the quesadillas until golden on both sides. Serve with sour cream.", "Outside is golden and crisp and the cheese is melted.", 3]]),
+    },
+    "pancakes": {
+      griddle: V(["griddle"], 12, [
+        ["Whisk the flour, sugar, baking powder and salt.", "Dry ingredients are evenly mixed with no pockets of baking powder.", 0],
+        ["Melt most of the butter and whisk it with the milk and egg.", "Egg is fully blended in and the butter is liquid.", 0],
+        ["Stir the wet into the dry until just combined. Lumps are fine.", "No dry flour streaks remain. Small lumps are fine.", 0],
+        ["Heat the griddle to about 375°F and butter it. Cook quarter-cup scoops until bubbles form, flip, and cook 1 more minute.", "Edges look set, bubbles pop and stay open, then the second side is golden.", 3],
+        ["Serve with maple syrup.", "Plates are stacked and syrup is on the table.", 0]]),
+    },
+    "eggs-toast": {
+      griddle: V(["griddle"], 6, [
+        ["Whisk the eggs with the milk, salt and pepper.", "Eggs are one even yellow with no streaks of white.", 0],
+        ["Heat the griddle to medium-low. Toast the bread on the griddle and butter it.", "Toast is golden and the butter has melted in.", 0],
+        ["Melt the remaining butter on a cooler spot of the griddle.", "Butter is foaming but not browning.", 0],
+        ["Pour the eggs onto the butter and push them slowly with a spatula until just set. Serve with the toast.", "No liquid egg remains, but the curds still look moist.", 0]]),
+      campfire: V(["campfire"], 10, [
+        ["Whisk the eggs with the milk, salt and pepper.", "Eggs are one even yellow with no streaks of white.", 0],
+        ["Toast the bread on a grate over the fire or in a dry pan on the camp stove, then butter it.", "Toast is golden and the butter has melted in.", 0],
+        ["Melt the remaining butter in a skillet over low heat on the camp stove, or at the cool edge of the grate.", "Butter is foaming but not browning.", 0],
+        ["Add the eggs and stir slowly until just set. Serve with the toast.", "No liquid egg remains, but the curds still look moist.", 0]]),
+    },
+    "chicken-fried-rice": {
+      griddle: V(["griddle", "stovetop"], 33, [
+        ["Cook the rice on the stove and spread it out to cool. Day-old rice works best.", "Rice grains are separate and cool to the touch.", 20],
+        ["Heat the griddle to high and oil it. Cook the diced chicken until done, then push it to a cooler side.", "Chicken is white all the way through and reads 165°F.", 6],
+        ["Scramble the eggs on the griddle and push them aside.", "Eggs are set in soft curds.", 2],
+        ["Oil the hot side, add the garlic and vegetables, then the rice. Fry, turning with two spatulas, until hot.", "Rice is hot and some grains are lightly toasted.", 5],
+        ["Mix in the chicken and eggs, add the soy sauce and sliced green onions, and toss.", "Everything is mixed and evenly brown from the soy sauce.", 0]]),
+    },
+    "breakfast-burritos": {
+      griddle: V(["griddle"], 24, [
+        ["Heat the griddle to medium. Cook the bacon until crisp and chop it.", "Bacon is crisp and drained on paper towel.", 8],
+        ["Fry the diced potatoes and onion in the oil on the griddle until browned and tender.", "Potatoes are browned and a fork slides through.", 12],
+        ["Turn the heat to medium-low and scramble the eggs with salt and pepper.", "No liquid egg remains, but the eggs still look moist.", 4],
+        ["Fill the tortillas with potatoes, eggs, bacon and shredded cheddar and roll tightly.", "Each burrito is rolled tight with the ends tucked in.", 0],
+        ["Wrap each one in foil. They keep 4 days in the fridge or 3 months frozen.", "Each burrito is wrapped and labeled with the date.", 0]]),
+      campfire: V(["campfire"], 30, [
+        ["Cook the bacon in a cast-iron skillet on the camp stove or a grate over the fire until crisp, then chop it.", "Bacon is crisp and drained on paper towel.", 8],
+        ["Fry the diced potatoes and onion in the oil in the same skillet, covered, until browned and tender.", "Potatoes are browned and a fork slides through.", 15],
+        ["Scramble the eggs with salt and pepper over low heat.", "No liquid egg remains, but the eggs still look moist.", 4],
+        ["Fill the tortillas with potatoes, eggs, bacon and shredded cheddar and roll tightly.", "Each burrito is rolled tight with the ends tucked in.", 0],
+        ["Wrap each one in foil and warm at the edge of the fire for a few minutes before eating.", "Each burrito is wrapped and warm all the way through.", 3]]),
+    },
+    "beef-chili": {
+      campfire: V(["campfire"], 50, [
+        ["Brown the beef in the oil in a Dutch oven or large pot on the camp stove or a grate over the fire, and drain extra fat.", "No pink remains in the beef and the fat is drained.", 0],
+        ["Add the diced onion and pepper and cook until soft. Stir in the garlic, chili powder and cumin.", "Onion is soft and the spices smell toasty, not burnt.", 6],
+        ["Add the tomatoes and the drained beans with a cup of water.", "Everything is in the pot and starting to bubble.", 0],
+        ["Simmer about 40 minutes over low heat, moving the pot to the edge of the coals if it boils hard, and stir now and then. Season with salt.", "Chili is thick enough that a spoon stands briefly, and the beans are soft.", 40]]),
+    },
+    "black-bean-tacos": {
+      campfire: V(["campfire"], 12, [
+        ["Drain and rinse the beans.", "Rinse water runs clear and no foam remains.", 0],
+        ["Cook half the diced onion in the oil in a skillet on the camp stove or a grate over the fire until soft, then add the beans, cumin, chili powder and a splash of water. Mash lightly and simmer 5 minutes.", "Beans are thick and creamy, not soupy.", 5],
+        ["Dice the tomatoes and mix with the rest of the onion, chopped cilantro, lime juice and salt.", "Tomato, onion and cilantro are evenly mixed and taste bright.", 0],
+        ["Warm the tortillas on the grate or in a dry skillet for a few seconds per side.", "Tortillas are soft and pliable with a few light brown spots.", 0],
+        ["Fill the tortillas with beans and top with the tomato mixture.", "Every tortilla is filled and topped.", 0]]),
+    },
+  };
+
+  for (const [id, vs] of Object.entries(OUTDOOR)) {
+    const r = RECIPES.find(x => x.id === id);
+    if (!r) throw new Error("Outdoor version for unknown recipe " + id);
+    for (const [k, v] of Object.entries(vs)) {
+      if (!OUTDOOR_GEAR[k] || !v.equip.includes(k)) throw new Error("Bad outdoor method " + k + " for " + id);
+      if (v.s.length !== r.s.length || v.d.length !== r.s.length || v.t.length !== r.s.length) throw new Error("Outdoor steps misaligned for " + id + " " + k);
+    }
+    r.outdoor = vs;
+  }
+  D.OUTDOOR_GEAR = OUTDOOR_GEAR;
+  if (typeof module !== "undefined") module.exports = { OUTDOOR, OUTDOOR_GEAR };
 })();
 
 // Nutrition per 100 g from the USDA National Nutrient Database for Standard Reference, Release 28 (SR28),
@@ -2882,11 +3100,11 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
 (function (root) {
   const AS_OF = "2026-11-12";
   const SOURCE = "https://www.fna.usda.gov/snap/waivers/foodrestriction";
-  const STATE_NAMES = { AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado", CT: "Connecticut", DE: "Delaware", DC: "District of Columbia", FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", PR: "Puerto Rico", VI: "U.S. Virgin Islands", GU: "Guam" };
+  const STATE_NAMES = { AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado", CT: "Connecticut", DE: "Delaware", DC: "District of Columbia", FL: "Florida", GA: "Georgia", HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", PR: "Puerto Rico", VI: "the U.S. Virgin Islands", GU: "Guam" };
   // Category names used below: soda (soft drinks, carbonated), sweetDrinks (sweetened beverages, which include soda),
   // energy (energy drinks), juiceDrinks (fruit drinks under 50% juice), candy, desserts (prepared desserts).
   // unhealthyDrinks is USDA's own vague wording for Arkansas and Missouri, so it never counts as a sure match.
-  const CAT_LABEL = { soda: "soda and soft drinks", sweetDrinks: "sweetened drinks", energy: "energy drinks", juiceDrinks: "fruit and vegetable drinks with less than 50% juice", unhealthyDrinks: "certain unhealthy drinks", candy: "candy", desserts: "prepared desserts" };
+  const CAT_LABEL = { soda: "soda and soft drinks", sweetDrinks: "sweetened drinks", energy: "energy drinks", juiceDrinks: "fruit and vegetable drinks with less than 50% natural juice", unhealthyDrinks: "certain unhealthy drinks", candy: "candy", desserts: "prepared desserts" };
   // Each state's restrictions as listed by USDA, with the date each one starts.
   const WAIVERS = {
     AR: [{ start: "2026-07-01", cats: ["soda", "juiceDrinks", "energy", "unhealthyDrinks", "candy"] }],
@@ -2912,7 +3130,10 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   // Approved, then vacated by a federal court; USDA says implementation may not proceed.
   const VACATED = ["CO", "IA", "TN", "WV"];
   // Places that don't run SNAP (they have their own nutrition assistance programs).
-  const NO_SNAP = { PR: "Puerto Rico", AS: "American Samoa", MP: "the Northern Mariana Islands" };
+  // Puerto Rico, American Samoa and the Northern Mariana Islands get USDA Nutrition Assistance Program block grants instead.
+  // Palau, Micronesia and the Marshall Islands are freely associated states that use U.S. ZIP codes but aren't SNAP places.
+  const NO_SNAP = { PR: "Puerto Rico", AS: "American Samoa", MP: "the Northern Mariana Islands", PW: "Palau", FM: "Micronesia", MH: "the Marshall Islands" };
+  const NO_SNAP_WHY = { PR: "has its own nutrition assistance program", AS: "has its own nutrition assistance program", MP: "has its own nutrition assistance program", PW: "isn't part of the U.S. SNAP program", FM: "isn't part of the U.S. SNAP program", MH: "isn't part of the U.S. SNAP program" };
 
   // Catalog items that could fall under a state category. sure:false means the state's own definition decides,
   // so the app says "may not be covered" rather than guessing. Everything else in the catalog is plain food.
@@ -2920,12 +3141,12 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
 
   // Words in an imported recipe line. Alcohol is never SNAP-eligible; the rest depend on the state.
   const RAW = [
-    { re: /\b(wine|beer|ale|ipa|lager|stout|porter|guinness|cider|mead|bourbon|whiske?y|scotch|rum|vodka|tequila|mezcal|gin|brandy|cognac|sherry|port|vermouth|liqueur|schnapps|champagne|prosecco|sangria|sake|soju|ouzo|absinthe|kahl[uú]a|amaretto|marsala|baileys|grand marnier|triple sec|cointreau|frangelico)\b/i,
-      safe: /\b(cooking wine|cooking sherry|(?:red |white |rice |sherry |champagne |cider |apple cider )?(?:wine )?vinegar|ginger ale|ginger beer|root beer|(?:rum|brandy|sherry|bourbon) extract|beer[- ]battered|wine[- ]braised|rum raisins?|apple cider|sweet cider|cider vinegar|port(?:obello|abella)? mushrooms?|pork|portion)\b/gi, cats: ["alcohol"], sure: true },
-    { re: /\b(soda|cola|coke|pepsi|soft drinks?|root beer|ginger ale|ginger beer|sprite|7[- ]?up|dr\.? ?pepper|mountain dew|fanta)\b/i, safe: /\b(baking soda|soda water|club soda|bicarbonate of soda|soda bread|soda crackers)\b/gi, cats: ["soda", "sweetDrinks", "unhealthyDrinks"], sure: true },
+    { re: /\b(wine|beer|ale|ipa|lager|stout|porter|guinness|hard (?:apple )?cider|hard seltzer|mead|bourbon|whiske?y|scotch|rum|vodka|tequila|mezcal|gin|brandy|cognac|sherry|port|vermouth|liqueur|schnapps|champagne|prosecco|sangria|sake|soju|ouzo|absinthe|limoncello|kahl[uú]a|amaretto|marsala|vin santo|bailey'?s|grand marnier|triple sec|cointreau|frangelico|j[aä]germeister|chardonnay|merlot|cabernet|pinot (?:noir|grigio|gris)|riesling|sauvignon blanc|moscato|zinfandel|bud light|budweiser|corona|coors|heineken|modelo|miller lite|white claw|jack daniel'?s|jameson|fireball|smirnoff|bacardi|captain morgan|hennessy|tito'?s)\b/i,
+      safe: /\b(cooking wine|cooking sherry|(?:red |white |rice |sherry |champagne |cider |apple cider |malt |ale )?(?:wine )?vinegar|ginger ale|ginger beer|root beer|(?:rum|brandy|sherry|bourbon) extract|bourbon vanilla(?: beans?| extract| paste)?|madagascar bourbon|beer[- ]battered|beer bread(?: mix)?|wine[- ]braised|rum raisins?|champagne (?:grapes|mangoe?s?)|port[- ]salut|port wine (?:cheese|jelly)|for (?:\w+'?s )?sake|corona (?:beans?|squash))\b/gi, cats: ["alcohol"], sure: true },
+    { re: /\b(soda|cola|coke|pepsi|soft drinks?|root beer|ginger ale|ginger beer|sprite|7[- ]?up|dr\.? ?pepper|mountain dew|fanta|canada dry|a&w)\b/i, safe: /\b(baking soda|bicarb(?:onate)?(?: of)? soda|soda water|club soda|soda bread|soda crackers)\b/gi, cats: ["soda", "sweetDrinks", "unhealthyDrinks"], sure: true },
     { re: /\b(energy drinks?|red bull|monster energy)\b/i, cats: ["energy", "sweetDrinks", "unhealthyDrinks"], sure: true },
     { re: /\b(lemonade|fruit punch|hawaiian punch|sweet tea|juice drink|kool[- ]?aid|sports drink|gatorade)\b/i, cats: ["sweetDrinks", "juiceDrinks", "unhealthyDrinks"], sure: false },
-    { re: /\b(candy|candies|candy bars?|gumm(?:y|ies)|jelly beans|m&m'?s|marshmallows?|toffee|caramels|peppermints|(?:chocolate|choc|butterscotch|peanut butter|white chocolate) (?:chips?|morsels)|semi-?sweet morsels|chocolate (?:bars?|candies|kisses)|hershey'?s|reese'?s|snickers|kit ?kat|butterfinger|heath bars?|sprinkles|jimmies)\b/i, cats: ["candy"], sure: false },
+    { re: /\b(candy|candies|candy bars?|gumm(?:y|ies)|jelly beans|m&m'?s|marshmallows?|toffee|caramels|peppermints|(?:chocolate|choc|butterscotch|peanut butter|white chocolate) (?:chips?|morsels)|semi-?sweet morsels|chocolate (?:bars?|candies|kisses)|hershey(?:'?s)?(?: bars?| kisses)?|reese'?s|snickers|kit ?kats?|butterfinger|heath bars?|skittles|starburst|twix|milky way|sprinkles|jimmies)\b/i, cats: ["candy"], sure: false },
   ];
 
   // ZIP code prefix (first three digits) to state, from the USPS prefix allocation.
@@ -2942,6 +3163,9 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     if (!m) return null;
     if (z === "96799") return "AS"; // American Samoa shares Hawaii's prefix
     if (+z >= 96950 && +z <= 96952) return "MP"; // Northern Mariana Islands share Guam's prefix
+    if (z === "96939" || z === "96940") return "PW"; // Palau
+    if (+z >= 96941 && +z <= 96944) return "FM"; // Micronesia
+    if (z === "96960" || z === "96970") return "MH"; // Marshall Islands
     const p = +m[1];
     const hit = ZIP3.find(([a, b]) => p >= a && p <= b);
     return hit ? hit[2] : null;
@@ -2965,7 +3189,6 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     if (!hit.length) return { status: "ok" };
     const where = STATE_NAMES[rules.state] || rules.state;
     if (hit.every(c => c === "unhealthyDrinks")) sure = false; // USDA's wording is too vague to be sure
-    hit.sort((a, b) => (a === "unhealthyDrinks") - (b === "unhealthyDrinks"));
     return sure
       ? { status: "no", why: where + " doesn't allow " + CAT_LABEL[hit[0]] + " with SNAP." }
       : { status: "maybe", why: where + " doesn't allow " + CAT_LABEL[hit[0]] + " with SNAP, and this may count. Check your state's list." };
@@ -2984,17 +3207,18 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     if (recipe.unmatched && recipe.unmatched.length) issues.push({ status: "maybe", why: "Some ingredient lines weren't recognised, so the app can't confirm they're covered." });
     return { ok: !issues.length, issues };
   }
-  const ONLINE = "Walmart, Amazon, Instacart and DoorDash take EBT online at participating stores, and Harris Teeter takes it for online pickup orders. SNAP pays for the food only: delivery fees, service fees and tips have to be paid another way.";
+  const ONLINE = "Walmart, Amazon, Instacart and DoorDash take EBT online at participating stores, and Harris Teeter takes it for pickup orders, paid at the store's customer service desk. SNAP pays for the food only: delivery fees, service fees and tips have to be paid another way.";
   function describe(rules) {
     if (!rules.state) return "Add your ZIP code to apply your state's rules. Until then only the national rules are used.";
-    if (rules.noSnap) return "SNAP doesn't run in " + NO_SNAP[rules.state] + ", which has its own nutrition assistance program. Only the national SNAP rules are shown.";
+    if (rules.noSnap) return "SNAP doesn't run in " + NO_SNAP[rules.state] + ", which " + NO_SNAP_WHY[rules.state] + ". Only the national SNAP rules are shown.";
     const name = STATE_NAMES[rules.state] || rules.state;
+    const Name = name.charAt(0).toUpperCase() + name.slice(1);
     const fmt = d => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-    if (rules.vacated) return name + "'s restriction waiver was struck down by a court, so the national rules apply.";
+    if (rules.vacated) return Name + "'s restriction waiver was struck down by a court, so the national rules apply.";
     const list = a => a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " or " + a[a.length - 1];
     const parts = [];
-    if (rules.listed.size) parts.push(name + " doesn't allow " + list([...rules.listed].map(c => CAT_LABEL[c])) + " to be bought with SNAP.");
-    else parts.push(name + " has no extra SNAP food restrictions right now.");
+    if (rules.listed.size) parts.push(Name + " doesn't allow " + list([...rules.listed].map(c => CAT_LABEL[c])) + " to be bought with SNAP.");
+    else parts.push(Name + " has no extra SNAP food restrictions right now.");
     for (const w of rules.later) parts.push("From " + fmt(w.start) + " it " + (rules.now.size ? "also " : "") + "won't allow " + list(w.cats.map(c => CAT_LABEL[c])) + ".");
     return parts.join(" ");
   }
@@ -3008,7 +3232,8 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       return { ok: false, text: (sure ? "SNAP: this recipe has an ingredient SNAP doesn't cover" : "SNAP: this recipe may not be fully covered") + (name ? " in " + name : "") + ". " + whys.join(" ") };
     }
     const sensitive = recipe.i.some(([k]) => ITEM_CATS[k]);
-    if (!name) return { ok: true, text: "SNAP: every ingredient here is covered under the national SNAP rules." + (sensitive ? " Some states count chocolate chips as candy, so add your ZIP code to check yours." : rules.state ? "" : " Add your ZIP code to apply your state's rules too.") };
+    if (rules.noSnap) return { ok: true, text: "SNAP: SNAP doesn't run in " + NO_SNAP[rules.state] + ", but every ingredient here is covered under the national SNAP rules." };
+    if (!name) return { ok: true, text: "SNAP: every ingredient here is covered under the national SNAP rules." + (sensitive ? " Some states count chocolate chips as candy, so add your ZIP code to check yours." : " Add your ZIP code to apply your state's rules too.") };
     return { ok: true, text: "SNAP: every ingredient here can be bought with SNAP in " + name + " under the rules USDA listed on " + fmtDay(AS_OF) + "." };
   }
   function fmtDay(d) { return new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }); }
@@ -3018,7 +3243,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
 
 // Pure logic: pricing, scaling, filtering, ranking. No DOM access here.
 (function (root) {
-  const D = typeof module !== "undefined" ? (require("./extras.js"), require("./data.js")) : globalThis.MEAL_MATTERS_DATA;
+  const D = typeof module !== "undefined" ? (require("./extras.js"), require("./outdoor.js"), require("./data.js")) : globalThis.MEAL_MATTERS_DATA;
   const { BLS, CATALOG, RECIPES, ZIP_REGIONS } = D;
   const NUT = typeof module !== "undefined" ? require("./nutrition.js") : globalThis.MEAL_MATTERS_NUTRITION;
   const SNAP = typeof module !== "undefined" ? require("./snap.js") : globalThis.Snap;
@@ -3170,6 +3395,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     if (!changed) return recipe;
     const out = Object.assign({}, recipe, { i, cook: cook ? Math.max(1, recipe.cook + cook) : recipe.cook, _swapped: true, _swapNotes: notes, _cookDelta: cook });
     if (recipe.airfry && cook) out.airfry = Object.assign({}, recipe.airfry, { cook: Math.max(1, recipe.airfry.cook + cook) });
+    if (recipe.outdoor && cook) out.outdoor = Object.fromEntries(Object.entries(recipe.outdoor).map(([k, v]) => [k, Object.assign({}, v, { cook: Math.max(1, v.cook + cook) })]));
     return out;
   }
   function swapsFor(recipe, ctx) {
@@ -3249,6 +3475,12 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
 
   // opts: { servings, maxMinutes, budget, diets[], allergens[], exclude (text), equipment (Set of owned),
   //         maxSkill, cuisines[], meals[], prepAheadOnly, saleOnly, sort }
+  // Outdoor gear, in the order the app prefers when more than one version fits.
+  const OUTDOOR_ORDER = ["grill", "griddle", "smoker", "campfire"];
+  // Outdoor versions of a recipe the user can cook with the gear they have.
+  function outdoorMethods(r, owned) {
+    return r.outdoor ? OUTDOOR_ORDER.filter(k => r.outdoor[k] && r.outdoor[k].equip.every(e => owned.has(e))) : [];
+  }
   function search(opts, ctx) {
     const owned = opts.equipment instanceof Set ? opts.equipment : new Set(opts.equipment || ["stovetop", "oven", "slow cooker", "air fryer", "toaster"]);
     const words = String(opts.exclude || "").toLowerCase().split(/[,;]+/).map(s => s.trim()).filter(Boolean);
@@ -3266,8 +3498,11 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       if (words.length && (r.rawLines || []).some(line => words.some(w => String(line).toLowerCase().includes(w)))) continue;
       const ovenOk = r.equip.every(e => owned.has(e));
       const airOk = !!r.airfry && r.airfry.equip.every(e => owned.has(e));
-      if (!ovenOk && !airOk) continue;
-      if (opts.airFryer && !r.equip.includes("air fryer") && !airOk) continue;
+      const outs = outdoorMethods(r, owned);
+      // opts.where: "indoor", "outdoor" or "either" (default). Outdoor means a grill, griddle, smoker or campfire version.
+      const where = opts.where === "outdoor" || opts.where === "indoor" ? opts.where : "either";
+      if (where === "outdoor" ? !outs.length : where === "indoor" ? !ovenOk && !airOk : !ovenOk && !airOk && !outs.length) continue;
+      if (where !== "outdoor" && opts.airFryer && !r.equip.includes("air fryer") && !airOk) continue;
       if (opts.maxSkill && r.skill > opts.maxSkill) continue;
       if (opts.cuisines && opts.cuisines.length && !opts.cuisines.includes(r.cuisine)) continue;
       if (opts.meals && opts.meals.length && ![].concat(r.meal).some(m => opts.meals.includes(m))) continue;
@@ -3280,6 +3515,9 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       // Use the air fryer version's time when that's how it will be cooked.
       c.method = (!ovenOk || (opts.airFryer && r.airfry)) && r.airfry ? "air fryer" : "default";
       if (c.method === "air fryer") c.minutes = r.prep + r.airfry.cook;
+      // Outdoors (or when only an outdoor version fits), time it by the first outdoor version the user can cook.
+      if (outs.length && (where === "outdoor" || (!ovenOk && !airOk))) { c.method = outs[0]; c.minutes = r.prep + r.outdoor[outs[0]].cook; }
+      c.outdoor = outs;
       if (opts.maxMinutes && c.minutes > opts.maxMinutes) continue;
       if (opts.budget && c.checkout > opts.budget + 1e-9) continue;
       if (opts.saleOnly && c.saleItems === 0) continue;
@@ -3384,7 +3622,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       perServing: totalServings ? used / totalServings : 0, prep, days, warnings };
   }
 
-  const API = { plural, storeUrl, planSummary, dayDiff, nutrientsFor, DV, NKEYS, NUT, lineText, optAllowed, krogerUrl, regionForZip, regionIndex, parseSize, priceInfo, costRecipe, flagsOf, DIETS, search, SWAPS, swapOptions, applySwaps, fmtQty, round2 };
+  const API = { OUTDOOR_ORDER, outdoorMethods, plural, storeUrl, planSummary, dayDiff, nutrientsFor, DV, NKEYS, NUT, lineText, optAllowed, krogerUrl, regionForZip, regionIndex, parseSize, priceInfo, costRecipe, flagsOf, DIETS, search, SWAPS, swapOptions, applySwaps, fmtQty, round2 };
   if (typeof module !== "undefined") module.exports = API; else root.Logic = API;
 })(typeof window !== "undefined" ? window : globalThis);
 
@@ -3906,7 +4144,6 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   }
 
   function readOpts() {
-    const checked = name => $$('input[name="' + name + '"]:checked').map(x => x.value);
     return {
       servings: Math.max(1, Math.min(50, parseInt($("#servings").value, 10) || 1)),
       maxMinutes: parseInt($("#maxTime").value, 10) || 0,
@@ -3915,6 +4152,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       allergens: checked("allergen"),
       exclude: $("#exclude").value,
       equipment: new Set(checked("equip")),
+      where: ($('input[name="where"]:checked') || { value: "either" }).value,
       maxSkill: parseInt($("#skill").value, 10) || 0,
       cuisines: checked("cuisine"),
       meals: checked("meal"),
@@ -3958,7 +4196,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   }
   function render() {
     const opts = readOpts();
-    regionLine(); snapLine();
+    regionLine(); snapLine(); whereHint();
     $("#saleOnly").disabled = !Object.keys(liveNow()).length;
     $("#saleNote").hidden = !!Object.keys(liveNow()).length;
     renderStoreSwitch();
@@ -4021,11 +4259,11 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       const r = c.recipe;
       const est = c.kinds.est ? '<span class="tag muted" title="Some prices are estimates">' + c.kinds.est + " est. prices</span>" : "";
       const sale = c.saleItems ? '<span class="tag sale">' + c.saleItems + " on sale</span>" : "";
-      const ahead = (r.prepAhead ? '<span class="tag">meal prep</span>' : "") + (r.airfry && c.method !== "air fryer" ? '<span class="tag">air fryer option</span>' : "");
+      const ahead = (r.prepAhead ? '<span class="tag">meal prep</span>' : "") + (r.airfry && c.method !== "air fryer" ? '<span class="tag">air fryer option</span>' : "") + ((c.outdoor || []).length && !METHOD_LABEL[c.method] ? '<span class="tag">outdoor option</span>' : "");
       const fit = c.fit != null ? '<span class="fit" title="Average of checkout÷budget and time÷limit. Lower fits better.">fit ' + c.fit.toFixed(2) + "</span>" : "";
       const ings = c.lines.map(l => '<span class="ci' + (l.inPantry ? " have" : "") + '">' + esc(!CATALOG[l.key].u && l.need > 1 ? Logic.plural(l.name, 2) : l.name) + " <b>" + money(l.usedCost) + "</b></span>").join("");
       const skill = ["", "Easy", "Moderate", "Involved"][r.skill];
-      const equipTxt = r.imported ? "See steps" : c.method === "air fryer" ? "Air fryer" : r.equip.length ? r.equip.map(x => x[0].toUpperCase() + x.slice(1)).join(" + ") : "No cooking";
+      const equipTxt = r.imported ? "See steps" : c.method === "air fryer" ? "Air fryer" : METHOD_LABEL[c.method] ? METHOD_LABEL[c.method] : r.equip.length ? r.equip.map(x => x[0].toUpperCase() + x.slice(1)).join(" + ") : "No cooking";
       return '<article class="card" data-i="' + i + '" tabindex="0" role="button" aria-label="' + esc(r.name) + '">' +
         '<div class="ph">' + (photo(r.id) ? '<img src="' + photo(r.id) + '" alt="" loading="lazy" decoding="async">' : '<span class="noph">' + esc(r.name.slice(0, 1).toUpperCase()) + "</span>") +
           '<span class="shelf"><b>' + money(c.perServing) + '</b><small>per serving</small></span>' + heart(r.id) + "</div>" +
@@ -4065,16 +4303,24 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $("#closeDetail").focus();
   }
 
-  const methodPick = {}; // recipeId -> "air" | "oven"
+  const methodPick = {}; // recipeId -> "oven" | "air" | "grill" | "griddle" | "smoker" | "campfire"
+  const METHOD_LABEL = { air: "Air fryer", grill: "Grill", griddle: "Griddle", smoker: "Smoker", campfire: "Campfire" };
+  function methodsOf(r) { return ["oven"].concat(r.airfry ? ["air"] : [], Logic.OUTDOOR_ORDER.filter(k => r.outdoor && r.outdoor[k])); }
   function methodFor(r, opts) {
-    if (!r.airfry) return "oven";
-    if (methodPick[r.id]) return methodPick[r.id];
+    const all = methodsOf(r);
+    if (methodPick[r.id] && all.includes(methodPick[r.id])) return methodPick[r.id];
     const owned = new Set($$('input[name="equip"]:checked').map(x => x.value));
+    const outs = Logic.outdoorMethods(r, owned);
+    const indoorOk = r.equip.every(e => owned.has(e)) || (r.airfry && r.airfry.equip.every(e => owned.has(e)));
+    if (outs.length && (opts.where === "outdoor" || !indoorOk)) return outs[0];
+    if (!r.airfry) return "oven";
     return opts.airFryer || !r.equip.every(e => owned.has(e)) ? "air" : "oven";
   }
   function methodView(r, m) {
-    return m === "air" ? { s: r.airfry.s, done: r.airfry.d, timers: r.airfry.t, equip: r.airfry.equip, cook: r.airfry.cook }
-      : { s: r.s, done: r.done, timers: r.timers, equip: r.equip, cook: r.cook };
+    if (m === "air" && r.airfry) return { s: r.airfry.s, done: r.airfry.d, timers: r.airfry.t, equip: r.airfry.equip, cook: r.airfry.cook };
+    const o = r.outdoor && r.outdoor[m];
+    if (o) return { s: o.s, done: o.d, timers: o.t, equip: o.equip, cook: o.cook, outdoor: true };
+    return { s: r.s, done: r.done, timers: r.timers, equip: r.equip, cook: r.cook };
   }
 
   function renderDetail() {
@@ -4135,8 +4381,9 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
         "<div><small>Skill</small><b>" + ["", "Easy", "Moderate", "Involved"][r.skill] + "</b></div>" +
         "<div><small>Protein</small><b>" + esc(r.protein || "see list") + "</b></div>" +
       "</div>" +
-      (r.airfry ? '<div class="methods" role="group" aria-label="Cooking method"><button type="button" class="meth' + (meth === "oven" ? " on" : "") + '" data-m="oven" aria-pressed="' + (meth === "oven") + '">' + esc(r.equip.includes("oven") ? "Oven" : "Original") + '</button><button type="button" class="meth' + (meth === "air" ? " on" : "") + '" data-m="air" aria-pressed="' + (meth === "air") + '">Air fryer</button></div>' +
-        (meth === "air" ? '<p class="hint">Air fryers vary. Times are typical, so go by the “done when” cues.</p>' : "") : "") +
+      (methodsOf(r).length > 1 ? '<div class="methods" role="group" aria-label="Cooking method">' + methodsOf(r).map(m => '<button type="button" class="meth' + (meth === m ? " on" : "") + '" data-m="' + m + '" aria-pressed="' + (meth === m) + '">' + esc(m === "oven" ? (r.equip.includes("oven") ? "Oven" : r.equip.length ? "Stovetop" : "Original") : METHOD_LABEL[m]) + "</button>").join("") + "</div>" +
+        (meth === "air" ? '<p class="hint">Air fryers vary. Times are typical, so go by the “done when” cues.</p>' : "") +
+        (M.outdoor ? '<p class="note warn">Cook outdoors only, away from the house. Never use a grill, smoker, griddle or camp stove indoors, in a garage or in a tent: they give off carbon monoxide. ' + (meth === "campfire" ? "Keep water nearby and put the fire out fully when you’re done." : "Heat and wind change cook times, so go by the “done when” cues and a thermometer.") + "</p>" : "") : "") +
       '<p class="meta">' + (M.equip.length ? "<b>Equipment:</b> " + esc(M.equip.join(", ")) : "<b>Equipment:</b> none, just a bowl and spoon") + (r.wait ? " · <b>Plan ahead:</b> " + esc(r.wait) : "") + "</p>" +
       (c.factor !== 1 ? '<p class="note">Scaled from ' + r.serves + " servings. Bigger batches can take a little longer, so go by the “done when” cues.</p>" : "") +
       '<div class="totals"><div><b>' + money(c.perServing) + '</b><small>per serving (what you’ll use)</small></div><div><b>' + money(c.used) + '</b><small>total you’re using</small></div><div><b>' + money(c.checkout) + "</b><small>at checkout</small></div></div>" +
@@ -4927,7 +5174,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   }
 
   // ----- Sync across devices -----
-  const SYNC_KEYS = ["allergies", "avoid", "favs", "plan", "pantry", "overrides", "stores", "activeStore", "goals", "profile", "myRecipes", "zip", "weekBudget", "snap", "swaps"]; // swaps last: they can refer to imported recipes
+  const SYNC_KEYS = ["allergies", "avoid", "favs", "plan", "pantry", "overrides", "stores", "activeStore", "goals", "profile", "myRecipes", "zip", "weekBudget", "snap", "equip", "where", "swaps"]; // swaps last: they can refer to imported recipes
   let syncTimer = null, syncApplying = false;
   function onStoreSet(k) {
     if (syncApplying || !SYNC_KEYS.includes(k) || !store.get("syncCode", "")) return;
@@ -4959,6 +5206,8 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     myRecipes: v => (Array.isArray(v) ? v : []).map(F.cleanImported).filter(Boolean).map(toMine),
     zip: v => (/^\d{5}$/.test(sStr(v, 10)) ? sStr(v, 10) : ""),
     snap: v => v === true,
+    equip: v => (Array.isArray(v) ? v : []).filter(x => ["stovetop", "oven", "slow cooker", "air fryer", "toaster", "grill", "griddle", "smoker", "campfire"].includes(x)),
+    where: v => (["either", "indoor", "outdoor"].includes(v) ? v : "either"),
     weekBudget: v => (Number.isFinite(sNum(v)) && sNum(v) > 0 ? sNum(v) : ""),
   };
   async function syncCall(method, code, body) {
@@ -4988,7 +5237,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     state.favs = store.get("favs", {}); state.plan = null; state.swaps = null; state.pantry = store.get("pantry", DEFAULT_PANTRY); state.overrides = store.get("overrides", {});
     state.stores = store.get("stores", []); state.active = store.get("activeStore", null); state.zip = store.get("zip", ""); $("#zip").value = state.zip;
     $("#weekBudget").value = store.get("weekBudget", "") || "";
-    loadMyRecipes(); loadAllergies(); $("#snapOnly").checked = store.get("snap", false) === true; state.liveBy = {};
+    loadMyRecipes(); loadAllergies(); loadCooking(); $("#snapOnly").checked = store.get("snap", false) === true; state.liveBy = {};
     renderPantry(); render(); renderGoal(); renderNutrition(); renderSync(); autoConnect();
   }
   async function syncPull(quiet) {
@@ -5022,11 +5271,37 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     }
   }
 
+  const OUTDOOR_KEYS = ["grill", "griddle", "smoker", "campfire"];
+  function checked(name) { return $$('input[name="' + name + '"]:checked').map(x => x.value); }
+  function loadCooking() {
+    const eq = store.get("equip", null);
+    if (Array.isArray(eq)) $$('input[name="equip"]').forEach(el => { el.checked = eq.includes(el.value); });
+    const w = store.get("where", "either");
+    const r = $('input[name="where"][value="' + (["indoor", "outdoor"].includes(w) ? w : "either") + '"]'); if (r) r.checked = true;
+    whereHint();
+  }
+  function whereHint() {
+    const out = ($('input[name="where"]:checked') || {}).value === "outdoor", gear = checked("equip").filter(k => OUTDOOR_KEYS.includes(k));
+    $("#whereHint").hidden = !out;
+    $("#whereHint").textContent = out ? (gear.length ? "Showing recipes with a version for your " + gear.map(k => ({ grill: "grill", griddle: "griddle", smoker: "smoker", campfire: "campfire or camp stove" })[k]).join(", ") + ". Change your gear under More filters." : "Tick the outdoor gear you have under More filters.") : "";
+  }
+  // Picking Outdoors with no outdoor gear ticked would show nothing, so start with the grill, the most common.
+  function whereChanged() {
+    if (($('input[name="where"]:checked') || {}).value === "outdoor" && !checked("equip").some(k => OUTDOOR_KEYS.includes(k))) {
+      $('input[name="equip"][value="grill"]').checked = true; store.set("equip", checked("equip"));
+      notify("Showing grill recipes. Tick your other outdoor gear under More filters.");
+      render();
+    }
+    whereHint();
+  }
   function fmtDate(d) { return new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }); }
   function loadAllergies() { const a = store.get("allergies", []); $$('input[name="allergen"]').forEach(x => { x.checked = a.includes(x.value); }); $("#exclude").value = store.get("avoid", ""); }
   function initExtras() {
     readMine().then(list => { state.mine = SANITIZE.myRecipes(list); loadMyRecipes(); state.swaps = null; render(); syncPull(true); });
     loadAllergies();
+    loadCooking();
+    $$('input[name="equip"]').forEach(el => el.addEventListener("change", () => store.set("equip", checked("equip"))));
+    $$('input[name="where"]').forEach(el => el.addEventListener("change", () => { store.set("where", el.value); whereChanged(); }));
     $("#snapOnly").checked = store.get("snap", false) === true;
     $("#snapOnline").textContent = "Ordering online: " + Snap.ONLINE;
     $("#snapSource").innerHTML = 'State rules from USDA\'s list of SNAP food restriction waivers, updated ' + esc(fmtDate(Snap.AS_OF)) + '. Waivers for Colorado, Iowa, Tennessee and West Virginia were struck down by a court and aren\'t applied. <a href="' + Snap.SOURCE + '" target="_blank" rel="noopener">See the USDA list ↗</a>';
