@@ -204,6 +204,7 @@ nav.tabs button{font-size:.8rem}
 .allergyrow legend{font-weight:700;padding:0}
 #allergyRow input:checked+*,#allergyRow label:has(input:checked){background:var(--sale-soft);border-color:var(--sale);color:var(--sale)}
 #toast{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto;background:var(--sale);color:var(--on-sale);border-radius:12px;padding:12px 14px;z-index:60;font-weight:700}
+#toast.ok{background:var(--accent);color:var(--on-accent)}
 .morebox{grid-column:1/-1;text-align:center;padding:8px 0}
 .swap{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.85rem}
 .swap span{font-weight:700;color:var(--accent)}
@@ -4297,6 +4298,39 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     const k = Math.min(1, Math.sqrt(MAX_PX / (w * h)), MAX_SIDE / Math.max(w, h));
     return { w: Math.max(1, Math.round(w * k)), h: Math.max(1, Math.round(h * k)) };
   }
+  // Start the photo reader without ever hanging. prepare() loads its code; start(hooks, prepared) must call the reader's own
+  // constructor synchronously (so the workers it makes are caught), passing hooks.poke as its progress callback and
+  // hooks.fail as its error handler. Gives up when nothing has happened for stallMs (from the very first step), when a
+  // worker fails to load, or when anything throws; then every worker made is terminated. A reader that only finishes
+  // starting after that is terminated on arrival. Settles exactly once; nothing rejects afterwards.
+  const STALL_MS = 30000;
+  function guardedStart(host, prepare, start, stallMs) {
+    let resolve, reject, done = false, stall;
+    const out = new Promise((a, b) => { resolve = a; reject = b; });
+    const made = [], Real = host.Worker;
+    const kill = w => { try { w.terminate(); } catch (e) { /* already gone */ } };
+    const finish = (err, w) => {
+      if (done) { if (w) kill(w); return; }
+      done = true; clearTimeout(stall);
+      if (err) { made.forEach(kill); if (w) kill(w); reject(err instanceof Error ? err : new Error(String(err))); } else resolve(w);
+    };
+    const poke = () => { if (done) return; clearTimeout(stall); stall = setTimeout(() => finish(new Error("The photo reader stopped downloading")), stallMs); };
+    function Caught(url, o) {
+      const w = new Real(url, o); made.push(w);
+      w.addEventListener("error", e => { if (e && e.preventDefault) e.preventDefault(); finish(new Error("The photo reader couldn't load")); });
+      return w;
+    }
+    Caught.prototype = Real.prototype;
+    poke();
+    Promise.resolve().then(prepare).then(prepared => {
+      if (done) return;
+      let p;
+      host.Worker = Caught;
+      try { p = start({ poke, fail: e => finish(e || new Error("The photo reader failed")) }, prepared); } finally { host.Worker = Real; }
+      return Promise.resolve(p).then(w => finish(null, w));
+    }).catch(e => finish(e));
+    return out;
+  }
   // Backstops so the reader can never wait forever: starting it (which downloads the 2.9 MB language file)
   // and reading each page. The app also gives up sooner when the download stalls (see makeOcrWorker in ui.js).
   const LIMITS = { startMs: 180000, readMs: 120000 };
@@ -4357,7 +4391,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     } finally { try { await task.destroy(); } catch (e) {} }
   }
 
-  const API = { LIMITS, photoSize, MAX_PX, MAX_SIDE, photoRecipe, tidyOcr, readRecipePhoto, ocrPdf, MAX_PHOTO, textToRecipe, servingsFrom, docxText, xmlParagraphs, pdfText, readRecipeFile, MAX_BYTES, MAX_XML, MAX_PAGES, Plain };
+  const API = { LIMITS, STALL_MS, guardedStart, photoSize, MAX_PX, MAX_SIDE, photoRecipe, tidyOcr, readRecipePhoto, ocrPdf, MAX_PHOTO, textToRecipe, servingsFrom, docxText, xmlParagraphs, pdfText, readRecipeFile, MAX_BYTES, MAX_XML, MAX_PAGES, Plain };
   if (typeof module !== "undefined") module.exports = API; else root.RecipeFiles = API;
 })(typeof window !== "undefined" ? window : globalThis);
 
@@ -5360,7 +5394,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       $("#cookBody").innerHTML = '<p class="ckpos">All ' + n + " steps done</p><p class=\"cktext\">Nice work. Enjoy your meal.</p>" +
         '<p class="ckadd">Want to keep a photo of how it turned out? It’s optional, and the photo stays on this device.</p><div id="ckDish"></div>';
       fillDish(r);
-      $("#cookPrev").disabled = false; $("#cookNext").textContent = "Close";
+      $("#cookPrev").disabled = false; $("#cookNext").textContent = "Close"; $("#cookRead").hidden = true;
       return;
     }
     const adds = c.optional.filter(o => o.on && o.step === i + 1 && Logic.optAllowed(o.key, opts)).map(o => '<p class="ckadd"><b>Add-in:</b> ' + esc(Logic.lineText(o.need, o.key)) + ". " + esc(o.how) + "</p>").join("");
@@ -5372,7 +5406,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       '<p class="ckwhen"><b>Done when:</b> ' + esc(M.done[i]) + "</p>" +
       (t ? '<button type="button" class="btn ghost big cktimer' + (run && Date.now() >= run.end ? " ring" : "") + '" data-step="' + i + '">' + (run ? timerText(run) : "Start " + fmtMin(t) + " timer") + "</button>" : "");
     const tb = $("#cookBody .cktimer"); if (tb) tb.addEventListener("click", () => { toggleTimer(r, i); renderCook(); });
-    $("#cookPrev").disabled = i === 0;
+    $("#cookPrev").disabled = i === 0; $("#cookRead").hidden = false;
     $("#cookNext").textContent = i === n - 1 ? "Done, finish" : "Done, next step";
   }
   function cookNext() {
@@ -5386,6 +5420,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     try {
       if (!window.speechSynthesis) return;
       speechSynthesis.cancel();
+      if (cook.fin) return;
       const M = state.curM, u = new SpeechSynthesisUtterance("Step " + (cook.i + 1) + ". " + M.s[cook.i] + " Done when " + M.done[cook.i]);
       u.rate = 0.95; speechSynthesis.speak(u);
     } catch (e) { /* no speech */ }
@@ -5464,7 +5499,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     if (file.size > 40 * 1024 * 1024) return notify("That photo is over 40 MB. Take it again at a normal size.");
     let blob;
     try { blob = await dishShrink(file); }
-    catch (e) { return notify(heic ? "This browser can't open HEIC photos. Use the camera button, or on iPhone set Camera > Formats to Most Compatible." : "That file isn't a photo the app can open. Try a JPEG or PNG."); }
+    catch (e) { return notify(heic ? "This browser can't open HEIC photos. On iPhone, set Settings > Camera > Formats to Most Compatible and take the photo again, or pick a JPEG or PNG." : "That file isn't a photo the app can open. Try a JPEG or PNG."); }
     try { await IDB.set("dish:" + id, { blob, at: Date.now() }); }
     catch (e) { return notify("This browser wouldn't save the photo. Private browsing can block it, or the device may be out of space."); }
     dishForget(id); dishUrls[id] = URL.createObjectURL(blob);
@@ -5483,7 +5518,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $$(".dishpick").forEach(b => b.onclick = () => { dishFor = r; const inp = $("#dishPick"); inp.value = ""; inp.click(); });
     $$(".dishdel").forEach(b => b.onclick = async () => {
       if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to remove"; return; }
-      await dishRemove(r.id); notify("Photo removed."); await refreshDish(r);
+      await dishRemove(r.id); notify("Photo removed.", "ok"); await refreshDish(r);
     });
   }
   // After a change, show the result where the person is looking: on the All done screen, or scrolled to on the recipe page.
@@ -5545,14 +5580,18 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     for (const o of state.mine) { const r = F.cleanImported(o); if (r && !seen.has(r.id)) { seen.add(r.id); RECIPES.push(r); } }
   }
   function toMine(r) { return { id: r.id, name: r.name, meal: r.meal, serves: r.serves, prep: r.prep, cook: r.cook, rawLines: r.rawLines, s: r.s, source: r.source || "" }; }
-  function notify(msg) {
+  // kind "ok" shows good news in the calm accent colour; the default red is for problems.
+  function notify(msg, kind) {
     const el = $("#toast"); if (!el) return;
-    el.textContent = msg; el.hidden = false; clearTimeout(notify.t); notify.t = setTimeout(() => { el.hidden = true; }, 7000);
+    el.textContent = msg; el.classList.toggle("ok", kind === "ok"); el.hidden = false; clearTimeout(notify.t); notify.t = setTimeout(() => { el.hidden = true; }, 7000);
   }
   function storageFull() { notify("This device is out of storage space, so your latest change wasn't saved. Delete some imported recipes or old meal plans and try again."); }
   let importDraft = null;
+  // Each read (link, file or photo) takes a number; only the newest one may change the message or the boxes, so a slow
+  // read that gives up late can't overwrite a newer result. Opening the sheet again also retires older reads.
+  let impSeq = 0;
   function openImport() {
-    importDraft = null; $("#impStart").hidden = false; $("#impReview").hidden = true; $("#impStatus").textContent = ""; $("#impUrl").value = "";
+    importDraft = null; impSeq++; $("#impStart").hidden = false; $("#impReview").hidden = true; $("#impStatus").textContent = ""; $("#impUrl").value = "";
     $("#importSheet").hidden = false; document.body.classList.add("locked"); $("#impUrl").focus();
   }
   function closeImport() { $("#importSheet").hidden = true; if ($("#detail").hidden && $("#splash").hidden) document.body.classList.remove("locked"); }
@@ -5562,12 +5601,15 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     const b = serverBase();
     if (b === null) { st.textContent = "Importing from a link needs the Meal Matters server. You can paste the recipe below instead."; st.className = "status bad"; $("#impPasteBox").open = true; return; }
     st.textContent = "Reading the page…"; st.className = "status";
+    const my = ++impSeq;
     try {
       const r = await fetch(b + "/api/import?url=" + encodeURIComponent(link));
       const d = await r.json().catch(() => ({}));
+      if (my !== impSeq) return;
       if (!r.ok || !d.recipe) throw new Error(d.error || "That page couldn't be read.");
       reviewImport(d.recipe, link);
     } catch (e) {
+      if (my !== impSeq) return;
       st.textContent = (e && e.message && !/fetch/i.test(e.message) ? e.message : "Importing from a link needs the Meal Matters server, which isn't reachable here.") + " You can paste the recipe below instead.";
       st.className = "status bad"; $("#impPasteBox").open = true;
     }
@@ -5580,36 +5622,30 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     return m;
   }
   // Tesseract.js (on-device text reading) sits in vendor/tesseract and loads only when a photo or scan is read.
-  function loadScript(src) { return new Promise((ok, bad) => { if (globalThis.Tesseract) return ok(); const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = () => bad(new Error("load")); document.head.appendChild(el); }); }
-  // Start Tesseract. If its files fail to load, or the language download stalls for 30 s, give up and shut down
-  // every worker it made. Tesseract's own promise never settles in those cases, so the workers are caught as they
-  // are created and their errors are handled here instead of surfacing as page errors.
-  const OCR_STALL_MS = +globalThis.__mmOcrStallMs || 30000; // tests may shorten the wait
-  async function makeOcrWorker(onProgress) {
-    const base = new URL("vendor/tesseract/", location.href).href;
-    await loadScript(base + "tesseract.min.js");
-    const made = [], Real = window.Worker;
-    let fail, stall;
-    const failed = new Promise((_, rej) => { fail = rej; });
-    const poke = () => { clearTimeout(stall); stall = setTimeout(() => fail(new Error("The photo reader stopped downloading")), OCR_STALL_MS); };
-    function Caught(url, o) { const w = new Real(url, o); made.push(w); w.addEventListener("error", e => { e.preventDefault(); fail(new Error("The photo reader couldn't load")); }); return w; }
-    Caught.prototype = Real.prototype;
-    window.Worker = Caught; poke();
-    let starting;
+  // It is loaded as a module with import(), so a missing or broken file is an ordinary error the app handles (a
+  // broken <script> tag would surface as a page error). A failed load is retried under a fresh address next time,
+  // because browsers remember failed module loads.
+  let tess = null, tessTries = 0;
+  async function loadTesseract(base) {
+    if (tess) return tess;
     try {
-      starting = Tesseract.createWorker("eng", 1, { workerPath: base + "worker.min.js", corePath: base + "core", langPath: base + "lang",
-        errorHandler: e => fail(e instanceof Error ? e : new Error(String(e))),
-        logger: m => { poke(); if (onProgress && m && typeof m.progress === "number") onProgress(m.status, m.progress); } });
-    } finally { window.Worker = Real; }
-    try { return await Promise.race([starting, failed]); }
-    catch (e) {
-      starting.then(w => w.terminate(), () => {}).catch(() => {});
-      made.forEach(w => { try { w.terminate(); } catch (x) { /* already gone */ } });
-      throw e;
-    } finally { clearTimeout(stall); }
+      const m = await import(base + "tesseract.esm.min.js" + (tessTries ? "?try=" + tessTries : ""));
+      if (!m.default || typeof m.default.createWorker !== "function") throw new Error("not the reader");
+      return (tess = m.default);
+    } catch (e) { tessTries++; throw new Error("The photo reader couldn't load"); }
   }
-  function ocrProgress(st) {
-    return (what, p) => { st.textContent = (/recogniz/i.test(what) ? "Reading the writing… " : "Getting the photo reader ready… ") + Math.round(p * 100) + "%"; };
+  // Start Tesseract through RecipeFiles.guardedStart: gives up after 30 s with no progress (script, core or language
+  // download), and shuts down every worker it made. Tests may shorten the wait with __mmOcrStallMs.
+  function makeOcrWorker(onProgress) {
+    const base = new URL("vendor/tesseract/", location.href).href;
+    return RecipeFiles.guardedStart(window, () => loadTesseract(base), (h, T) =>
+      T.createWorker("eng", 1, { workerPath: base + "worker.min.js", corePath: base + "core", langPath: base + "lang",
+        errorHandler: h.fail,
+        logger: m => { h.poke(); if (onProgress && m && typeof m.progress === "number") onProgress(m.status, m.progress); } }),
+      +globalThis.__mmOcrStallMs || RecipeFiles.STALL_MS);
+  }
+  function ocrProgress(st, my) {
+    return (what, p) => { if (my !== undefined && my !== impSeq) return; st.textContent = (/recogniz/i.test(what) ? "Reading the writing… " : "Getting the photo reader ready… ") + Math.round(p * 100) + "%"; };
   }
   // Open the photo on the device and shrink big ones (see RecipeFiles.photoSize): faster, same accuracy.
   async function preparePhoto(file) {
@@ -5638,10 +5674,12 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     const el = $("#impFile"), f = el.files && el.files[0], st = $("#impStatus");
     if (!f) return;
     st.textContent = "Reading " + f.name + "…"; st.className = "status";
+    const my = ++impSeq;
     try {
-      const r = await RecipeFiles.readRecipeFile(f, loadPdfjs, { makeWorker: makeOcrWorker, onProgress: ocrProgress(st), makeCanvas });
-      fillImport(r, f.name);
+      const r = await RecipeFiles.readRecipeFile(f, loadPdfjs, { makeWorker: makeOcrWorker, onProgress: ocrProgress(st, my), makeCanvas });
+      if (my === impSeq) fillImport(r, f.name);
     } catch (e) {
+      if (my !== impSeq) return;
       st.textContent = (e && e.message ? e.message : "That file couldn't be read. Paste the recipe in instead.") + " Nothing in the boxes below was changed."; st.className = "status bad";
     } finally { el.value = ""; }
   }
@@ -5649,8 +5687,9 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     const el = $("#impPhoto"), f = el.files && el.files[0], st = $("#impStatus");
     if (!f) return;
     st.textContent = "Getting the photo reader ready…"; st.className = "status";
-    try { fillImport(await RecipeFiles.readRecipePhoto(f, makeOcrWorker, ocrProgress(st), preparePhoto), "the photo"); }
-    catch (e) { st.textContent = (e && e.message ? e.message : "That photo couldn't be read. Type the recipe in instead.") + " Nothing in the boxes below was changed."; st.className = "status bad"; }
+    const my = ++impSeq;
+    try { const r = await RecipeFiles.readRecipePhoto(f, makeOcrWorker, ocrProgress(st, my), preparePhoto); if (my === impSeq) fillImport(r, "the photo"); }
+    catch (e) { if (my !== impSeq) return; st.textContent = (e && e.message ? e.message : "That photo couldn't be read. Type the recipe in instead.") + " Nothing in the boxes below was changed."; st.className = "status bad"; }
     finally { el.value = ""; }
   }
   function importFromPaste() {
