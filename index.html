@@ -5,9 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Meal Matters</title>
 <link rel="icon" href="data:,">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<link rel="preload" href="vendor/fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+/* Fonts are served from this site (vendor/fonts, SIL Open Font License), so nothing is fetched from Google. */
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-display:swap;font-weight:400;src:url(vendor/fonts/atkinson-hyperlegible-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-display:swap;font-weight:700;src:url(vendor/fonts/atkinson-hyperlegible-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Bricolage Grotesque';font-style:normal;font-display:swap;font-weight:200 800;src:url(vendor/fonts/bricolage-grotesque-latin-opsz-normal.woff2) format('woff2-variations'),url(vendor/fonts/bricolage-grotesque-latin-opsz-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-display:swap;font-weight:400;src:url(vendor/fonts/atkinson-hyperlegible-latin-ext-400-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-display:swap;font-weight:700;src:url(vendor/fonts/atkinson-hyperlegible-latin-ext-700-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Bricolage Grotesque';font-style:normal;font-display:swap;font-weight:200 800;src:url(vendor/fonts/bricolage-grotesque-latin-ext-opsz-normal.woff2) format('woff2-variations'),url(vendor/fonts/bricolage-grotesque-latin-ext-opsz-normal.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+
 :root{--bg:#edf2ea;--card:#fff;--ink:#1c2620;--muted:#56645b;--line:#d6e0d2;--accent:#2f6b3f;--accent-soft:#dcebdc;--sale:#c93a2a;--sale-soft:#fbe4df;--warn-ink:#9c2618;--on-accent:#fff;--on-sale:#fff;--butter:#f5c542;--butter-ink:#3a2c00;--r:14px;
   --display:"Bricolage Grotesque",ui-rounded,system-ui,sans-serif;--body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 @media (prefers-color-scheme:dark){:root{--bg:#121a15;--card:#1b261f;--ink:#e9efe8;--muted:#a4b3a8;--line:#2c3a31;--accent:#7fcb92;--accent-soft:#1f3527;--sale:#ff8a75;--sale-soft:#3d1f1a;--warn-ink:#ffb3a5;--on-accent:#10241a;--on-sale:#2a0d08;--butter:#f5c542;--butter-ink:#3a2c00}}
@@ -68,6 +75,14 @@ legend{font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:6px}
 .cingd summary{font-size:.85rem;color:var(--accent);font-weight:700;min-height:32px;display:flex;align-items:center}
 .hero{margin:-18px -16px 6px;aspect-ratio:16/9;overflow:hidden}
 .hero img{width:100%;height:100%;object-fit:cover;display:block}
+.dish{margin:10px 0 4px}
+.dish img{width:100%;max-height:60vh;object-fit:cover;border-radius:12px;display:block;background:var(--line)}
+.dish figcaption{color:var(--muted);font-size:.9rem;margin-top:6px}
+.dishbtns{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.dishadd{margin:12px 0 4px}
+.dishadd .hint{margin-top:4px}
+#ckDish{margin-top:10px}
+#ckDish .dish img{max-height:40vh}
 .card:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .row1{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .card h3{margin:0;font-size:1.2rem;font-weight:800;line-height:1.2}
@@ -599,6 +614,7 @@ footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
 
 <div id="toast" hidden role="alert"></div>
 
+<input type="file" id="dishPick" accept="image/*" hidden aria-hidden="true" tabindex="-1">
 <div id="cook" hidden role="dialog" aria-modal="true" aria-label="Cooking mode">
   <div class="ckhead"><b id="cookTitle"></b><button type="button" class="btn ghost sm" id="cookClose">Exit</button></div>
   <div id="cookBody" aria-live="polite"></div>
@@ -4047,7 +4063,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
 
 // Recipe files (PDF and Word .docx) read on the device, then turned into the same
 // { name, ingredients, steps, yield } shape the paste importer uses. Nothing is uploaded.
-// Scanned PDFs have no text layer; they get a clear message (an AI reader is planned with the server).
+// Scanned PDFs and photos have no text layer; they are read with Tesseract.js on the device (see below).
 (function (root) {
   const MAX_BYTES = 15 * 1024 * 1024;   // largest file accepted
   const MAX_XML = 20 * 1024 * 1024;     // largest unzipped document.xml (guards against zip bombs)
@@ -4255,7 +4271,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
           throw new Plain("This PDF couldn't be read. It may be damaged. Try another copy, or paste the recipe in.");
         }
         if (text.replace(/\s/g, "").length < 40) {
-          if (!ocr) throw new Plain("This PDF looks like a scan or a photo, so there's no text in it. Use Take a photo instead, or paste the recipe in.");
+          if (!ocr) throw new Plain("This PDF looks like a scan or a photo, so there's no text in it. Use the photo button instead, or paste the recipe in.");
           let t2; try { t2 = await ocrPdf(buf, pdfjs, ocr.makeWorker, ocr.onProgress, ocr.makeCanvas); }
           catch (e) { throw new Plain("This PDF is a scan and the photo reader couldn't run here. Type or paste the recipe in."); }
           if (t2.replace(/\s/g, "").length < 20) throw new Plain("This PDF is a scan and no writing could be read from it. Type or paste the recipe in.");
@@ -4274,10 +4290,28 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
 
   // ---------- Photos and scanned PDFs: Tesseract.js on the device ----------
   const MAX_PHOTO = 25 * 1024 * 1024, MAX_SCAN_PAGES = 4;
-  // makeWorker(onProgress) returns a started Tesseract worker; it is always terminated afterwards.
+  // Size to read a photo at: at most about 4.8 megapixels (2200 x 2200) and 6000 px on the long side.
+  // Capping the area, not just the long side, keeps tall screenshots readable.
+  const MAX_PX = 2200 * 2200, MAX_SIDE = 6000;
+  function photoSize(w, h) {
+    const k = Math.min(1, Math.sqrt(MAX_PX / (w * h)), MAX_SIDE / Math.max(w, h));
+    return { w: Math.max(1, Math.round(w * k)), h: Math.max(1, Math.round(h * k)) };
+  }
+  // Backstops so the reader can never wait forever: starting it (which downloads the 2.9 MB language file)
+  // and reading each page. The app also gives up sooner when the download stalls (see makeOcrWorker in ui.js).
+  const LIMITS = { startMs: 180000, readMs: 120000 };
+  function within(promise, ms, what) {
+    let t; const late = new Promise((_, rej) => { t = setTimeout(() => rej(new Error(what + " took too long")), ms); });
+    return Promise.race([promise, late]).finally(() => clearTimeout(t));
+  }
+  // makeWorker(onProgress) returns a started Tesseract worker. It is always terminated afterwards, on success,
+  // on error and on time-out; a worker that only finishes starting after we gave up is terminated when it arrives.
   async function ocrImages(images, makeWorker, onProgress) {
-    const w = await makeWorker(onProgress);
-    try { let out = ""; for (const im of images) out += (await w.recognize(im)).data.text + "\n"; return out; }
+    const starting = Promise.resolve().then(() => makeWorker(onProgress));
+    let w;
+    try { w = await within(starting, LIMITS.startMs, "Starting the photo reader"); }
+    catch (e) { starting.then(late => { try { late.terminate(); } catch (x) {} }, () => {}); throw e; }
+    try { const out = []; for (const im of images) out.push((await within(w.recognize(im), LIMITS.readMs, "Reading the photo")).data.text); return out.join("\n") + "\n"; }
     finally { try { await w.terminate(); } catch (e) {} }
   }
   // OCR text keeps line breaks but adds stray symbols; tidy the obvious ones before parsing.
@@ -4323,7 +4357,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     } finally { try { await task.destroy(); } catch (e) {} }
   }
 
-  const API = { photoRecipe, tidyOcr, readRecipePhoto, ocrPdf, MAX_PHOTO, textToRecipe, servingsFrom, docxText, xmlParagraphs, pdfText, readRecipeFile, MAX_BYTES, MAX_XML, MAX_PAGES, Plain };
+  const API = { LIMITS, photoSize, MAX_PX, MAX_SIDE, photoRecipe, tidyOcr, readRecipePhoto, ocrPdf, MAX_PHOTO, textToRecipe, servingsFrom, docxText, xmlParagraphs, pdfText, readRecipeFile, MAX_BYTES, MAX_XML, MAX_PAGES, Plain };
   if (typeof module !== "undefined") module.exports = API; else root.RecipeFiles = API;
 })(typeof window !== "undefined" ? window : globalThis);
 
@@ -4677,6 +4711,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       (photo(r.id) ? '<div class="hero"><img src="' + photo(r.id) + '" alt="' + esc(r.name) + '"></div>' : "") +
       '<div class="dhead"><h2>' + esc(r.name) + "</h2>" + heart(r.id, true) + "</div>" +
       '<div class="flavors">' + r.flavors.map(f => '<span class="fl">' + esc(f) + "</span>").join("") + "</div>" +
+      '<div id="dishTop"></div>' +
       '<div class="facts">' +
         "<div><small>Prep</small><b>" + r.prep + " min</b></div>" +
         "<div><small>Cook</small><b>" + fmtMin(M.cook) + "</b></div>" +
@@ -4705,6 +4740,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       '<div class="bar2"><div style="width:' + Math.round(done.size / M.s.length * 100) + '%"></div></div>' +
       '<ol class="steps">' + steps + "</ol>" +
       (done.size === M.s.length ? '<p class="note ok">All steps done. Enjoy your meal.</p>' : "") +
+      '<div id="dishAdd"></div>' +
       '<div class="btns"><button type="button" class="btn ghost" id="resetSteps">Reset steps</button></div>' +
       (opts.snap ? (n => '<p class="note ' + (n.ok ? "ok" : "warn") + '" id="snapNote">' + esc(n.text + " " + Snap.ONLINE) + "</p>")(Snap.recipeNote(eff, opts.snap)) : "") +
       '<p class="note">Always check product labels for allergens. Prices marked “estimate” are rough national figures, not store prices.</p>';
@@ -4716,6 +4752,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $$("#detailBody .meth").forEach(b => b.addEventListener("click", () => { methodPick[r.id] = b.dataset.m; keepScroll(renderDetail); }));
     $("#resetSteps").addEventListener("click", () => { done.clear(); keepScroll(renderDetail); });
     $("#startCook").addEventListener("click", openCook);
+    fillDish(r);
     if ($("#delMine")) $("#delMine").addEventListener("click", () => { if ($("#delMine").dataset.sure) deleteMyRecipe(r.id); else { $("#delMine").dataset.sure = "1"; $("#delMine").textContent = "Tap again to delete"; } });
     $("#copyList").addEventListener("click", () => copyList(c));
     $("#addToPlan").addEventListener("click", () => openPlanSheet(Object.assign({ recipeId: r.id, servings: c.servings, slot: (state.picking && state.picking.slot) || slotFor(r) }, state.picking ? { date: state.picking.date } : {})));
@@ -5298,12 +5335,12 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   }
 
   // ----- Cooking mode -----
-  const cook = { on: false, i: 0, lock: null, rec: null };
+  const cook = { on: false, i: 0, lock: null, rec: null, fin: false };
   function cookDone() { return stepsDone[current.id + ":" + state.curMeth]; }
   function openCook() {
     const n = state.curM.s.length, done = cookDone();
     let i = 0; while (i < n - 1 && done.has(i)) i++;
-    cook.on = true; cook.i = i;
+    cook.on = true; cook.i = i; cook.fin = false;
     $("#cook").hidden = false; renderCook(); wake(true);
     $("#cookWake").textContent = navigator.wakeLock ? "Your screen stays on while cooking mode is open." : "This browser may let the screen dim, so tap it now and then.";
     $("#cookVoice").hidden = !(window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -5318,6 +5355,14 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   }
   function renderCook() {
     const r = current, M = state.curM, i = cook.i, n = M.s.length, done = cookDone(), c = state.curC, opts = readOpts();
+    if (cook.fin) {
+      $("#cookTitle").textContent = r.name;
+      $("#cookBody").innerHTML = '<p class="ckpos">All ' + n + " steps done</p><p class=\"cktext\">Nice work. Enjoy your meal.</p>" +
+        '<p class="ckadd">Want to keep a photo of how it turned out? It’s optional, and the photo stays on this device.</p><div id="ckDish"></div>';
+      fillDish(r);
+      $("#cookPrev").disabled = false; $("#cookNext").textContent = "Close";
+      return;
+    }
     const adds = c.optional.filter(o => o.on && o.step === i + 1 && Logic.optAllowed(o.key, opts)).map(o => '<p class="ckadd"><b>Add-in:</b> ' + esc(Logic.lineText(o.need, o.key)) + ". " + esc(o.how) + "</p>").join("");
     const t = M.timers[i], run = timers[r.id + ":" + state.curMeth + ":" + i];
     $("#cookTitle").textContent = r.name;
@@ -5331,11 +5376,12 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $("#cookNext").textContent = i === n - 1 ? "Done, finish" : "Done, next step";
   }
   function cookNext() {
+    if (cook.fin) return closeCook();
     const n = state.curM.s.length; cookDone().add(cook.i);
-    if (cook.i >= n - 1) return closeCook();
+    if (cook.i >= n - 1) { cook.fin = true; renderCook(); try { window.speechSynthesis && speechSynthesis.cancel(); } catch (e) { /* no speech */ } return; }
     cook.i++; renderCook(); if (cook.rec) speakStep();
   }
-  function cookPrev() { if (cook.i > 0) { cook.i--; renderCook(); if (cook.rec) speakStep(); } }
+  function cookPrev() { if (cook.fin) { cook.fin = false; renderCook(); return; } if (cook.i > 0) { cook.i--; renderCook(); if (cook.rec) speakStep(); } }
   function speakStep() {
     try {
       if (!window.speechSynthesis) return;
@@ -5383,6 +5429,78 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $$("#planLeft [data-sugg]").forEach(b => b.addEventListener("click", () => openPlanSheet({ recipeId: b.dataset.sugg, servings: +b.dataset.sv })));
   }
 
+  // ----- Your dish photos (optional) -----
+  // A photo of how the meal turned out. Shrunk on the device to at most 1280 px and saved as a JPEG in IndexedDB,
+  // keyed by recipe. Re-drawing it drops the camera's hidden data (such as location). Never uploaded or synced.
+  const DISH_MAX = 1280, dishUrls = {};
+  let dishFor = null;
+  async function dishUrl(id) {
+    if (Object.prototype.hasOwnProperty.call(dishUrls, id)) return dishUrls[id];
+    let rec = null; try { rec = await IDB.get("dish:" + id); } catch (e) { /* no IndexedDB */ }
+    return (dishUrls[id] = rec && rec.blob instanceof Blob ? URL.createObjectURL(rec.blob) : "");
+  }
+  function dishForget(id) { if (dishUrls[id]) URL.revokeObjectURL(dishUrls[id]); delete dishUrls[id]; }
+  async function dishRemove(id) { try { await IDB.del("dish:" + id); } catch (e) { /* nothing saved */ } dishForget(id); }
+  async function dishShrink(file) {
+    let bmp;
+    try { bmp = await createImageBitmap(file); }
+    catch (e) {
+      // Older Safari: fall back to an <img>.
+      bmp = await new Promise((res, rej) => { const u = URL.createObjectURL(file), im = new Image(); im.onload = () => { URL.revokeObjectURL(u); res(im); }; im.onerror = () => { URL.revokeObjectURL(u); rej(new Error("decode")); }; im.src = u; });
+    }
+    const w0 = bmp.width || bmp.naturalWidth, h0 = bmp.height || bmp.naturalHeight;
+    if (!w0 || !h0) throw new Error("decode");
+    const k = Math.min(1, DISH_MAX / Math.max(w0, h0)), cv = document.createElement("canvas");
+    cv.width = Math.max(1, Math.round(w0 * k)); cv.height = Math.max(1, Math.round(h0 * k));
+    const g = cv.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(bmp, 0, 0, cv.width, cv.height);
+    if (bmp.close) bmp.close();
+    const blob = await new Promise(res => cv.toBlob(res, "image/jpeg", 0.82));
+    if (!blob) throw new Error("encode");
+    return blob;
+  }
+  async function dishSave(id, file) {
+    const heic = /\.(heic|heif)$/i.test(file.name || "") || /hei[cf]/i.test(file.type || "");
+    if (!/^image\//.test(file.type || "") && !/\.(jpe?g|png|webp|gif|bmp|heic|heif|avif)$/i.test(file.name || "")) return notify("Pick a photo (JPEG or PNG).");
+    if (file.size > 40 * 1024 * 1024) return notify("That photo is over 40 MB. Take it again at a normal size.");
+    let blob;
+    try { blob = await dishShrink(file); }
+    catch (e) { return notify(heic ? "This browser can't open HEIC photos. Use the camera button, or on iPhone set Camera > Formats to Most Compatible." : "That file isn't a photo the app can open. Try a JPEG or PNG."); }
+    try { await IDB.set("dish:" + id, { blob, at: Date.now() }); }
+    catch (e) { return notify("This browser wouldn't save the photo. Private browsing can block it, or the device may be out of space."); }
+    dishForget(id); dishUrls[id] = URL.createObjectURL(blob);
+    return true;
+  }
+  // Fill the photo spots on the recipe page and on the cooking-mode "All done" screen.
+  async function fillDish(r) {
+    const url = await dishUrl(r.id);
+    if (current !== r) return;
+    const top = $("#dishTop"), add = $("#dishAdd"), ck = cook.on && cook.fin ? $("#ckDish") : null;
+    const fig = '<figure class="dish"><img src="' + url + '" alt="Your photo of ' + esc(r.name) + '"><figcaption>How yours turned out. Saved on this device only.</figcaption>' +
+      '<div class="dishbtns"><button type="button" class="btn ghost sm dishpick">Replace photo</button><button type="button" class="link dishdel">Remove photo</button></div></figure>';
+    if (top) top.innerHTML = url ? fig : "";
+    if (add) add.innerHTML = url ? "" : '<div class="dishadd"><button type="button" class="btn ghost dishpick">Add a photo of how yours turned out</button><p class="hint">Optional. The photo stays on this device and isn’t shared.</p></div>';
+    if (ck) ck.innerHTML = url ? fig : '<button type="button" class="btn ghost big dishpick">Add a photo</button>';
+    $$(".dishpick").forEach(b => b.onclick = () => { dishFor = r; const inp = $("#dishPick"); inp.value = ""; inp.click(); });
+    $$(".dishdel").forEach(b => b.onclick = async () => {
+      if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to remove"; return; }
+      await dishRemove(r.id); notify("Photo removed."); await refreshDish(r);
+    });
+  }
+  // After a change, show the result where the person is looking: on the All done screen, or scrolled to on the recipe page.
+  async function refreshDish(r, show) {
+    if (current !== r) return;
+    if (cook.on) return fillDish(r);
+    keepScroll(renderDetail); await fillDish(r);
+    const fig = show && $("#dishTop .dish");
+    if (fig) { const im = $("img", fig); try { await im.decode(); } catch (e) { /* show it anyway */ }
+      fig.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); const btn = $(".dishpick", fig); if (btn) btn.focus({ preventScroll: true }); }
+  }
+  async function dishPicked() {
+    const inp = $("#dishPick"), f = inp.files && inp.files[0], r = dishFor || current; inp.value = "";
+    if (!f || !r) return;
+    if (await dishSave(r.id, f)) await refreshDish(r, true);
+  }
+
   // ----- Imported recipes -----
   // Imported recipes live in IndexedDB, which holds far more than localStorage's ~5 MB.
   // If IndexedDB isn't available (some private modes), they fall back to localStorage.
@@ -5400,7 +5518,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       return dbp;
     }
     const tx = (mode, fn) => open().then(db => new Promise((res, rej) => { const t = db.transaction("kv", mode); const r = fn(t.objectStore("kv")); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error); }));
-    return { get: k => tx("readonly", s => s.get(k)), set: (k, v) => tx("readwrite", s => { s.put(v, k); }) };
+    return { get: k => tx("readonly", s => s.get(k)), set: (k, v) => tx("readwrite", s => { s.put(v, k); }), del: k => tx("readwrite", s => { s.delete(k); }) };
   })();
   state.mine = [];
   function myRecipes() { return state.mine; }
@@ -5463,20 +5581,40 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   }
   // Tesseract.js (on-device text reading) sits in vendor/tesseract and loads only when a photo or scan is read.
   function loadScript(src) { return new Promise((ok, bad) => { if (globalThis.Tesseract) return ok(); const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = () => bad(new Error("load")); document.head.appendChild(el); }); }
+  // Start Tesseract. If its files fail to load, or the language download stalls for 30 s, give up and shut down
+  // every worker it made. Tesseract's own promise never settles in those cases, so the workers are caught as they
+  // are created and their errors are handled here instead of surfacing as page errors.
+  const OCR_STALL_MS = +globalThis.__mmOcrStallMs || 30000; // tests may shorten the wait
   async function makeOcrWorker(onProgress) {
     const base = new URL("vendor/tesseract/", location.href).href;
     await loadScript(base + "tesseract.min.js");
-    return Tesseract.createWorker("eng", 1, { workerPath: base + "worker.min.js", corePath: base + "core", langPath: base + "lang",
-      logger: m => { if (onProgress && m && typeof m.progress === "number") onProgress(m.status, m.progress); } });
+    const made = [], Real = window.Worker;
+    let fail, stall;
+    const failed = new Promise((_, rej) => { fail = rej; });
+    const poke = () => { clearTimeout(stall); stall = setTimeout(() => fail(new Error("The photo reader stopped downloading")), OCR_STALL_MS); };
+    function Caught(url, o) { const w = new Real(url, o); made.push(w); w.addEventListener("error", e => { e.preventDefault(); fail(new Error("The photo reader couldn't load")); }); return w; }
+    Caught.prototype = Real.prototype;
+    window.Worker = Caught; poke();
+    let starting;
+    try {
+      starting = Tesseract.createWorker("eng", 1, { workerPath: base + "worker.min.js", corePath: base + "core", langPath: base + "lang",
+        errorHandler: e => fail(e instanceof Error ? e : new Error(String(e))),
+        logger: m => { poke(); if (onProgress && m && typeof m.progress === "number") onProgress(m.status, m.progress); } });
+    } finally { window.Worker = Real; }
+    try { return await Promise.race([starting, failed]); }
+    catch (e) {
+      starting.then(w => w.terminate(), () => {}).catch(() => {});
+      made.forEach(w => { try { w.terminate(); } catch (x) { /* already gone */ } });
+      throw e;
+    } finally { clearTimeout(stall); }
   }
   function ocrProgress(st) {
     return (what, p) => { st.textContent = (/recogniz/i.test(what) ? "Reading the writing… " : "Getting the photo reader ready… ") + Math.round(p * 100) + "%"; };
   }
-  // Open the photo on the device; phone photos are shrunk so the long side is at most 2200 px (faster, same accuracy).
+  // Open the photo on the device and shrink big ones (see RecipeFiles.photoSize): faster, same accuracy.
   async function preparePhoto(file) {
-    const bmp = await createImageBitmap(file);
-    const k = Math.min(1, 2200 / Math.max(bmp.width, bmp.height));
-    const c = makeCanvas(Math.round(bmp.width * k), Math.round(bmp.height * k));
+    const bmp = await createImageBitmap(file), z = RecipeFiles.photoSize(bmp.width, bmp.height);
+    const c = makeCanvas(z.w, z.h);
     c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height); if (bmp.close) bmp.close();
     return c;
   }
@@ -5544,6 +5682,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     });
   }
   async function deleteMyRecipe(id) {
+    await dishRemove(id);
     await saveMine(myRecipes().filter(r => r.id !== id));
     state.plan = planAll().filter(e => e.recipeId !== id); planSave();
     delete state.favs[id]; store.set("favs", state.favs);
@@ -5707,6 +5846,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $("#impUrl").addEventListener("keydown", e => { if (e.key === "Enter") importFromUrl(); });
     $("#impParse").addEventListener("click", importFromPaste);
     $("#impFile").addEventListener("change", importFromFile);
+    $("#dishPick").addEventListener("change", dishPicked);
     $("#impPhoto").addEventListener("change", importFromPhoto);
     $("#impUndo").addEventListener("click", () => { if (impUndo) impUndo(); $("#impStatus").textContent = "Put back what was in the boxes."; $("#impStatus").className = "status"; });
     $("#flavorBack").addEventListener("click", showQuestion);

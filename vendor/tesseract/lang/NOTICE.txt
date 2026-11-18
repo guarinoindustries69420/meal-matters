@@ -1,0 +1,11 @@
+eng.traineddata.gz: English model for Tesseract OCR, as packaged in @tesseract.js-data/eng 1.0.0
+(the 4.0.0_best_int build). Unchanged from the package.
+
+Where it comes from: Google's tesseract-ocr/tessdata_best models, repackaged by the Tesseract.js
+project (naptha/tessdata). Both of those repositories are released under the Apache License 2.0;
+the full text is in LICENSE in this folder. The npm package's own metadata lists "MIT" but ships no
+licence text, so the Apache text from the data's source is the one included here.
+
+https://github.com/tesseract-ocr/tessdata_best
+https://github.com/naptha/tessdata
+https://www.npmjs.com/package/@tesseract.js-data/eng
