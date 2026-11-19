@@ -3,7 +3,7 @@ Meal Matters by Guarino Industries LLC: recipes priced by local groceries, time 
 
 Live at https://meals.guarinoindustries.com
 
-The whole app is `index.html`. Everything you add stays in your own browser: your pantry, plans, imported recipes and dish photos. Recipe files and recipe photos are read on your device and never uploaded. The page loads nothing from other sites, fonts included, unless you point it at your own pricing server in its settings.
+The whole app is `index.html`. Everything you add stays in your own browser: your pantry, plans, imported recipes and dish photos. Recipe files and recipe photos are read on your device and never uploaded. The page loads nothing from other sites, fonts included, with two exceptions: a pricing server you set up yourself in its settings, and, on the live site only, Cloudflare Web Analytics, which counts page views without cookies or personal data. Nothing you type, read or save is sent to it.
 
 `vendor/` holds the parts served next to the page, each with its licence:
 
