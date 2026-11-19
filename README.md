@@ -8,7 +8,7 @@ The whole app is `index.html`. Everything you add stays in your own browser: you
 `vendor/` holds the parts served next to the page, each with its licence:
 
 - `vendor/pdfjs`: pdf.js, for reading recipe PDFs (Apache License 2.0)
-- `vendor/tesseract`: Tesseract.js and its English model, for reading recipe photos and scanned PDFs (Apache License 2.0). About 15 MB, loaded only the first time someone reads a photo.
+- `vendor/tesseract`: Tesseract.js and its English model, for reading recipe photos and scanned PDFs (Apache License 2.0). About 15 MB, loaded only the first time someone reads a photo. The libraries compiled into it carry their own notices, listed in `vendor/tesseract/README.txt`. This software is based in part on the work of the Independent JPEG Group.
 - `vendor/fonts`: Atkinson Hyperlegible and Bricolage Grotesque (SIL Open Font License 1.1)
 
 The app's own code is under the MIT License (see `LICENSE`).

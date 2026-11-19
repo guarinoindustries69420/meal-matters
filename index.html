@@ -600,6 +600,7 @@ footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
         <input id="impFile" class="vh" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"><label for="impFile" class="btn ghost pickbtn">Pick a recipe file (PDF or Word)</label>
       </div>
       <p class="hint">Photos and files are read on this device. Nothing is uploaded. You can fix anything it gets wrong before saving.</p>
+      <p class="status" id="impUseRow" hidden><button type="button" class="link" id="impUseRead">Use what was read instead</button> (Undo will put your typing back)</p>
       <p class="status" id="impUndoRow" hidden><button type="button" class="link" id="impUndo">Undo, put back what was in the boxes</button></p>
       <details id="impPasteBox"><summary>Type, paste or edit the recipe</summary>
         <label class="f">Recipe name<input id="impName" type="text"></label>
@@ -5591,7 +5592,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   // read that gives up late can't overwrite a newer result. Opening the sheet again also retires older reads.
   let impSeq = 0;
   function openImport() {
-    importDraft = null; impSeq++; $("#impStart").hidden = false; $("#impReview").hidden = true; $("#impStatus").textContent = ""; $("#impUrl").value = "";
+    importDraft = null; impSeq++; impHeld = null; impTyped = IMP_BOXES.some(id => id !== "impServes" && $("#" + id).value.trim()); $("#impUseRow").hidden = true; $("#impStart").hidden = false; $("#impReview").hidden = true; $("#impStatus").textContent = ""; $("#impUrl").value = "";
     $("#importSheet").hidden = false; document.body.classList.add("locked"); $("#impUrl").focus();
   }
   function closeImport() { $("#importSheet").hidden = true; if ($("#detail").hidden && $("#splash").hidden) document.body.classList.remove("locked"); }
@@ -5625,19 +5626,22 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   // It is loaded as a module with import(), so a missing or broken file is an ordinary error the app handles (a
   // broken <script> tag would surface as a page error). A failed load is retried under a fresh address next time,
   // because browsers remember failed module loads.
-  // An earlier load that is still hanging (the reader gave up on it) gets the same treatment: browsers would hand every
-  // later import of that address the same stuck request, so the next try uses a fresh one.
-  let tess = null, tessTries = 0, tessBusy = 0;
-  async function loadTesseract(base) {
-    if (tess) return tess;
-    if (tessBusy) tessTries++;
-    const me = ++tessBusy;
-    try {
-      const m = await import(base + "tesseract.esm.min.js" + (tessTries ? "?try=" + tessTries : ""));
+  // Reads that start together share one load. A load still unsettled after the stall time has been given up on: the
+  // browser would hand every later import of that address the same stuck request, so the next try uses a fresh one.
+  let tess = null, tessTries = 0, tessLoad = null;
+  function loadTesseract(base) {
+    if (tess) return Promise.resolve(tess);
+    const stall = +globalThis.__mmOcrStallMs || RecipeFiles.STALL_MS;
+    if (tessLoad && Date.now() - tessLoad.at < stall) return tessLoad.p;
+    if (tessLoad) tessTries++;
+    const me = { at: Date.now(), p: null };
+    tessLoad = me;
+    me.p = import(base + "tesseract.esm.min.js" + (tessTries ? "?try=" + tessTries : "")).then(m => {
       if (!m.default || typeof m.default.createWorker !== "function") throw new Error("not the reader");
       return (tess = m.default);
-    } catch (e) { tessTries++; throw new Error("The photo reader couldn't load"); }
-    finally { if (me === tessBusy) tessBusy = 0; }
+    }).catch(() => { tessTries++; throw new Error("The photo reader couldn't load"); })
+      .finally(() => { if (tessLoad === me) tessLoad = null; });
+    return me.p;
   }
   // Start Tesseract through RecipeFiles.guardedStart: gives up after 30 s with no progress (script, core or language
   // download), and shuts down every worker it made. Tests may shorten the wait with __mmOcrStallMs.
@@ -5662,8 +5666,24 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   function makeCanvas(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
   let impUndo = null;
   // Fill the boxes for the user to check. What was there before can be put back with Undo.
+  // Once the person types in the boxes, a read that finishes afterwards doesn't overwrite them: it says what it read
+  // and offers "Use what was read instead". impTyped is set by typing and cleared whenever the app fills the boxes.
+  const IMP_BOXES = ["impName", "impServes", "impIngs", "impSteps"];
+  let impTyped = false, impHeld = null;
+  function holdOrFill(r, from) {
+    $("#impUseRow").hidden = true; impHeld = null;
+    if (impTyped && ["impName", "impIngs", "impSteps"].some(id => $("#" + id).value.trim())) {
+      impHeld = { r, from };
+      const st = $("#impStatus");
+      st.textContent = "Read " + r.ingredients.length + " ingredient" + (r.ingredients.length === 1 ? "" : "s") + " and " + r.steps.length + " step" + (r.steps.length === 1 ? "" : "s") + " from " + from + ". What you typed was kept.";
+      st.className = "status ok"; $("#impUseRow").hidden = false;
+      return;
+    }
+    fillImport(r, from);
+  }
   function fillImport(r, from) {
-    const ids = ["impName", "impServes", "impIngs", "impSteps"], before = ids.map(id => $("#" + id).value);
+    const ids = IMP_BOXES, before = ids.map(id => $("#" + id).value);
+    impTyped = false; impHeld = null; $("#impUseRow").hidden = true;
     $("#impName").value = r.name; $("#impServes").value = parseInt(r.yield, 10) || 4;
     $("#impIngs").value = r.ingredients.join("\n"); $("#impSteps").value = r.steps.join("\n");
     $("#impPasteBox").open = true;
@@ -5682,7 +5702,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     const my = ++impSeq;
     try {
       const r = await RecipeFiles.readRecipeFile(f, loadPdfjs, { makeWorker: makeOcrWorker, onProgress: ocrProgress(st, my), makeCanvas });
-      if (my === impSeq) fillImport(r, f.name);
+      if (my === impSeq) holdOrFill(r, f.name);
     } catch (e) {
       if (my !== impSeq) return;
       st.textContent = (e && e.message ? e.message : "That file couldn't be read. Paste the recipe in instead.") + " Nothing in the boxes below was changed."; st.className = "status bad";
@@ -5693,14 +5713,14 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     if (!f) return;
     st.textContent = "Getting the photo reader ready…"; st.className = "status";
     const my = ++impSeq;
-    try { const r = await RecipeFiles.readRecipePhoto(f, makeOcrWorker, ocrProgress(st, my), preparePhoto); if (my === impSeq) fillImport(r, "the photo"); }
+    try { const r = await RecipeFiles.readRecipePhoto(f, makeOcrWorker, ocrProgress(st, my), preparePhoto); if (my === impSeq) holdOrFill(r, "the photo"); }
     catch (e) { if (my !== impSeq) return; st.textContent = (e && e.message ? e.message : "That photo couldn't be read. Type the recipe in instead.") + " Nothing in the boxes below was changed."; st.className = "status bad"; }
     finally { el.value = ""; }
   }
   function importFromPaste() {
-    impSeq++; // what was typed wins over any read still running
     const lines = $("#impIngs").value.split(/\n+/).map(s => s.replace(/^[-*•\s]+/, "").trim()).filter(Boolean);
     if (!lines.length) { $("#impStatus").textContent = "Paste at least one ingredient line."; $("#impStatus").className = "status bad"; return; }
+    impSeq++; // the checked recipe wins over any read still running
     reviewImport({ name: $("#impName").value.trim() || "My recipe", ingredients: lines, steps: $("#impSteps").value.split(/\n+/).map(s => s.replace(/^\s*(\d+[.)]|[-*•])\s*/, "").trim()).filter(Boolean), yield: String(parseInt($("#impServes").value, 10) || 4) }, "");
   }
   function reviewImport(j, url) {
@@ -5893,7 +5913,9 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $("#impFile").addEventListener("change", importFromFile);
     $("#dishPick").addEventListener("change", dishPicked);
     $("#impPhoto").addEventListener("change", importFromPhoto);
-    $("#impUndo").addEventListener("click", () => { if (impUndo) impUndo(); $("#impStatus").textContent = "Put back what was in the boxes."; $("#impStatus").className = "status"; });
+    $("#impUndo").addEventListener("click", () => { if (impUndo) impUndo(); impTyped = true; $("#impStatus").textContent = "Put back what was in the boxes."; $("#impStatus").className = "status"; });
+    IMP_BOXES.forEach(id => $("#" + id).addEventListener("input", () => { impTyped = true; }));
+    $("#impUseRead").addEventListener("click", () => { if (impHeld) fillImport(impHeld.r, impHeld.from); });
     $("#flavorBack").addEventListener("click", showQuestion);
     $("#importSheet").addEventListener("click", e => { if (e.target.id === "importSheet") closeImport(); });
     $("#cookClose").addEventListener("click", closeCook);
