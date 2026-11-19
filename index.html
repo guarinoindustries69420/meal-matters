@@ -5406,7 +5406,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       '<p class="ckwhen"><b>Done when:</b> ' + esc(M.done[i]) + "</p>" +
       (t ? '<button type="button" class="btn ghost big cktimer' + (run && Date.now() >= run.end ? " ring" : "") + '" data-step="' + i + '">' + (run ? timerText(run) : "Start " + fmtMin(t) + " timer") + "</button>" : "");
     const tb = $("#cookBody .cktimer"); if (tb) tb.addEventListener("click", () => { toggleTimer(r, i); renderCook(); });
-    $("#cookPrev").disabled = i === 0; $("#cookRead").hidden = false;
+    $("#cookPrev").disabled = i === 0; $("#cookRead").hidden = !window.speechSynthesis;
     $("#cookNext").textContent = i === n - 1 ? "Done, finish" : "Done, next step";
   }
   function cookNext() {
@@ -5625,14 +5625,19 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   // It is loaded as a module with import(), so a missing or broken file is an ordinary error the app handles (a
   // broken <script> tag would surface as a page error). A failed load is retried under a fresh address next time,
   // because browsers remember failed module loads.
-  let tess = null, tessTries = 0;
+  // An earlier load that is still hanging (the reader gave up on it) gets the same treatment: browsers would hand every
+  // later import of that address the same stuck request, so the next try uses a fresh one.
+  let tess = null, tessTries = 0, tessBusy = 0;
   async function loadTesseract(base) {
     if (tess) return tess;
+    if (tessBusy) tessTries++;
+    const me = ++tessBusy;
     try {
       const m = await import(base + "tesseract.esm.min.js" + (tessTries ? "?try=" + tessTries : ""));
       if (!m.default || typeof m.default.createWorker !== "function") throw new Error("not the reader");
       return (tess = m.default);
     } catch (e) { tessTries++; throw new Error("The photo reader couldn't load"); }
+    finally { if (me === tessBusy) tessBusy = 0; }
   }
   // Start Tesseract through RecipeFiles.guardedStart: gives up after 30 s with no progress (script, core or language
   // download), and shuts down every worker it made. Tests may shorten the wait with __mmOcrStallMs.
@@ -5693,6 +5698,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     finally { el.value = ""; }
   }
   function importFromPaste() {
+    impSeq++; // what was typed wins over any read still running
     const lines = $("#impIngs").value.split(/\n+/).map(s => s.replace(/^[-*•\s]+/, "").trim()).filter(Boolean);
     if (!lines.length) { $("#impStatus").textContent = "Paste at least one ingredient line."; $("#impStatus").className = "status bad"; return; }
     reviewImport({ name: $("#impName").value.trim() || "My recipe", ingredients: lines, steps: $("#impSteps").value.split(/\n+/).map(s => s.replace(/^\s*(\d+[.)]|[-*•])\s*/, "").trim()).filter(Boolean), yield: String(parseInt($("#impServes").value, 10) || 4) }, "");
