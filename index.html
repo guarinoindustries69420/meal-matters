@@ -180,6 +180,7 @@ ol.steps{list-style:none;padding:0;margin:0}
 @media (prefers-reduced-motion:reduce){#splashLogo,#question{animation:none}}
 .pickrow{margin:4px 4px 0;font-size:.92rem}
 button.link{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:6px 4px;min-height:32px;text-decoration:underline}
+#impUseRow button.link,#impUndoRow button.link{min-height:44px}
 .nutri{font-size:.84rem;margin-top:6px}
 .nf table{font-size:.88rem}.nf tr.sub td:first-child{padding-left:18px;color:var(--muted)}
 .gbar{margin:8px 0}.glab{display:flex;justify-content:space-between;font-size:.88rem;font-weight:600}
@@ -294,12 +295,14 @@ details.adv{margin:12px 4px;font-size:.9rem}details.adv summary{color:var(--mute
 footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
 </style>
 <script>
-/* Cloudflare Web Analytics: counts page views with no cookies and no personal data. It runs only on the live site,
-   so copies opened elsewhere (and the tests) send nothing. Nothing typed, read or saved in the app is sent. */
+/* Cloudflare Web Analytics: counts page views without cookies. Cloudflare receives the visitor's IP address and
+   browser details with each view and says it doesn't store the IP. It runs only on the live site (the exact host
+   name), so copies opened elsewhere (and the tests) send nothing. The app never puts what is typed, read or saved
+   into its address, so none of that goes with the page view. */
 (function () {
   if (location.hostname !== "meals.guarinoindustries.com") return;
   var s = document.createElement("script");
-  s.defer = true; s.src = "https://static.cloudflareinsights.com/beacon.min.js";
+  s.src = "https://static.cloudflareinsights.com/beacon.min.js";
   s.setAttribute("data-cf-beacon", '{"token": "67d3259dc1c84829a0975dec08890853"}');
   document.head.appendChild(s);
 })();
@@ -611,7 +614,7 @@ footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
         <input id="impFile" class="vh" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"><label for="impFile" class="btn ghost pickbtn">Pick a recipe file (PDF or Word)</label>
       </div>
       <p class="hint">Photos and files are read on this device. Nothing is uploaded. You can fix anything it gets wrong before saving.</p>
-      <p class="status" id="impUseRow" hidden><button type="button" class="link" id="impUseRead">Use what was read instead</button> (Undo will put your typing back)</p>
+      <p class="status" id="impUseRow" hidden><button type="button" class="link" id="impUseRead">Use what was read instead</button> <span id="impUseNote">(Undo will put your typing back)</span></p>
       <p class="status" id="impUndoRow" hidden><button type="button" class="link" id="impUndo">Undo, put back what was in the boxes</button></p>
       <details id="impPasteBox"><summary>Type, paste or edit the recipe</summary>
         <label class="f">Recipe name<input id="impName" type="text"></label>
@@ -4286,7 +4289,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
         if (text.replace(/\s/g, "").length < 40) {
           if (!ocr) throw new Plain("This PDF looks like a scan or a photo, so there's no text in it. Use the photo button instead, or paste the recipe in.");
           let t2; try { t2 = await ocrPdf(buf, pdfjs, ocr.makeWorker, ocr.onProgress, ocr.makeCanvas); }
-          catch (e) { throw new Plain("This PDF is a scan and the photo reader couldn't run here. Type or paste the recipe in."); }
+          catch (e) { throw new Plain("This PDF is a scan and " + readerTrouble(e, "Type or paste the recipe in.")); }
           if (t2.replace(/\s/g, "").length < 20) throw new Plain("This PDF is a scan and no writing could be read from it. Type or paste the recipe in.");
           return Object.assign(photoRecipe(t2, nm.replace(/\.[^.]+$/, "")), { kind: "scan" });
         }
@@ -4374,6 +4377,14 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     }
     return r;
   }
+  // What went wrong with the photo reader, in plain words: its download stalled (check the connection), reading took
+  // too long (a smaller or clearer photo helps), or it couldn't run at all (the fallback advice the caller gives).
+  function readerTrouble(e, fallback) {
+    const m = String(e && e.message || "");
+    if (/stopped downloading|^Starting the photo reader took too long/.test(m)) return "the photo reader didn't finish downloading. Check your connection and try again, or type the recipe in.";
+    if (/^Reading the photo took too long/.test(m)) return "reading it took too long. Try a smaller or clearer photo, or type the recipe in.";
+    return "the photo reader couldn't run here. " + fallback;
+  }
   // prepare(file) opens the image on the device (and may shrink it); it throws if the file isn't a picture it can open.
   async function readRecipePhoto(file, makeWorker, onProgress, prepare) {
     const heic = /\.(heic|heif)$/i.test(file.name || "") || /hei[cf]/i.test(file.type || "");
@@ -4384,7 +4395,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     catch (e) { throw new Plain(heic ? "This browser can't open HEIC photos. Take the picture with the button in the app, or on iPhone set Camera > Formats to Most Compatible." : "That file isn't a photo the app can open. Try a JPEG or PNG."); }
     let text;
     try { text = await ocrImages([img], makeWorker, onProgress); }
-    catch (e) { throw new Plain("The photo reader couldn't run here. Open the app from meals.guarinoindustries.com, or type the recipe in."); }
+    catch (e) { const m = readerTrouble(e, "Open the app from meals.guarinoindustries.com, or type the recipe in."); throw new Plain(m[0].toUpperCase() + m.slice(1)); }
     if (text.replace(/\s/g, "").length < 20) throw new Plain("No writing was found in that photo. Try again in good light, straight on, with the whole recipe in the frame.");
     return Object.assign(photoRecipe(text, ""), { kind: "photo" });
   }
@@ -5603,7 +5614,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   // read that gives up late can't overwrite a newer result. Opening the sheet again also retires older reads.
   let impSeq = 0;
   function openImport() {
-    importDraft = null; impSeq++; impHeld = null; impTyped = IMP_BOXES.some(id => id !== "impServes" && $("#" + id).value.trim()); $("#impUseRow").hidden = true; $("#impStart").hidden = false; $("#impReview").hidden = true; $("#impStatus").textContent = ""; $("#impUrl").value = "";
+    importDraft = null; impSeq++; impHeld = null; $("#impUseRow").hidden = true; $("#impStart").hidden = false; $("#impReview").hidden = true; $("#impStatus").textContent = ""; $("#impUrl").value = "";
     $("#importSheet").hidden = false; document.body.classList.add("locked"); $("#impUrl").focus();
   }
   function closeImport() { $("#importSheet").hidden = true; if ($("#detail").hidden && $("#splash").hidden) document.body.classList.remove("locked"); }
@@ -5619,7 +5630,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
       const d = await r.json().catch(() => ({}));
       if (my !== impSeq) return;
       if (!r.ok || !d.recipe) throw new Error(d.error || "That page couldn't be read.");
-      reviewImport(d.recipe, link);
+      holdOr("Read “" + (d.recipe.name || "the recipe") + "” from the link.", "your typing stays in the boxes", () => reviewImport(d.recipe, link));
     } catch (e) {
       if (my !== impSeq) return;
       st.textContent = (e && e.message && !/fetch/i.test(e.message) ? e.message : "Importing from a link needs the Meal Matters server, which isn't reachable here.") + " You can paste the recipe below instead.";
@@ -5681,17 +5692,24 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   // and offers "Use what was read instead". impTyped is set by typing and cleared whenever the app fills the boxes.
   const IMP_BOXES = ["impName", "impServes", "impIngs", "impSteps"];
   let impTyped = false, impHeld = null;
-  function holdOrFill(r, from) {
+  // A finished read either goes ahead (use) or, if the person has typed in the boxes, waits behind "Use what was read
+  // instead". (No old Undo can sit beside it: typing withdraws Undo, see the input listener.)
+  function holdOr(summary, note, use) {
     $("#impUseRow").hidden = true; impHeld = null;
     if (impTyped && ["impName", "impIngs", "impSteps"].some(id => $("#" + id).value.trim())) {
-      impHeld = { r, from };
+      impHeld = use;
       const st = $("#impStatus");
-      st.textContent = "Read " + r.ingredients.length + " ingredient" + (r.ingredients.length === 1 ? "" : "s") + " and " + r.steps.length + " step" + (r.steps.length === 1 ? "" : "s") + " from " + from + ". What you typed was kept.";
-      st.className = "status ok"; $("#impUseRow").hidden = false;
+      st.textContent = summary + " What you typed was kept.";
+      st.className = "status ok"; $("#impUseNote").textContent = "(" + note + ")"; $("#impUseRow").hidden = false;
       return;
     }
-    fillImport(r, from);
+    use();
   }
+  function readSummary(r, from) {
+    return r.unsorted ? "Read the writing from " + from + ", but couldn't tell the ingredients from the steps."
+      : "Read " + r.ingredients.length + " ingredient" + (r.ingredients.length === 1 ? "" : "s") + " and " + r.steps.length + " step" + (r.steps.length === 1 ? "" : "s") + " from " + from + ".";
+  }
+  function holdOrFill(r, from) { holdOr(readSummary(r, from), "Undo will put your typing back", () => fillImport(r, from)); }
   function fillImport(r, from) {
     const ids = IMP_BOXES, before = ids.map(id => $("#" + id).value);
     impTyped = false; impHeld = null; $("#impUseRow").hidden = true;
@@ -5925,8 +5943,9 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $("#dishPick").addEventListener("change", dishPicked);
     $("#impPhoto").addEventListener("change", importFromPhoto);
     $("#impUndo").addEventListener("click", () => { if (impUndo) impUndo(); impTyped = true; $("#impStatus").textContent = "Put back what was in the boxes."; $("#impStatus").className = "status"; });
-    IMP_BOXES.forEach(id => $("#" + id).addEventListener("input", () => { impTyped = true; }));
-    $("#impUseRead").addEventListener("click", () => { if (impHeld) fillImport(impHeld.r, impHeld.from); });
+    // Typing marks the boxes as the person's own, and withdraws an Undo (it would throw the edits away).
+    IMP_BOXES.forEach(id => $("#" + id).addEventListener("input", () => { impTyped = true; impUndo = null; $("#impUndoRow").hidden = true; }));
+    $("#impUseRead").addEventListener("click", () => { const use = impHeld; impHeld = null; if (use) use(); });
     $("#flavorBack").addEventListener("click", showQuestion);
     $("#importSheet").addEventListener("click", e => { if (e.target.id === "importSheet") closeImport(); });
     $("#cookClose").addEventListener("click", closeCook);
