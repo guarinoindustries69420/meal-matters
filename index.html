@@ -557,7 +557,7 @@ footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
   </div>
   <div class="panel" id="syncPanel">
     <h3 style="margin-top:0">Use on another device</h3>
-    <p class="hint">Sync keeps your favorites, meal plans, pantry, stores, goals and imported recipes the same on your phone and computer. Anyone with your code can see and change this data, so keep it private like a password.</p>
+    <p class="hint" id="syncAbout">Sync keeps your favorites, meal plans, pantry, stores, goals and imported recipes the same on your phone and computer. Anyone with your code can see and change this data, so keep it private like a password.</p>
     <div id="syncBody"></div>
     <p class="status" id="syncStatus" role="status"></p>
   </div>
@@ -608,6 +608,7 @@ footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
     <div id="impStart">
       <label class="f">Recipe web address<input id="impUrl" type="url" placeholder="https://" autocomplete="off" inputmode="url"></label>
       <div class="btns"><button type="button" class="btn" id="impFetch">Get recipe</button><button type="button" class="btn ghost" id="impCancel">Cancel</button></div>
+      <p class="hint" id="impNoLink" hidden>Importing from a web address needs the Meal Matters server, which this site doesn't have yet. Use a photo, a file, or paste the recipe below.</p>
       <p class="status" id="impStatus" role="status"></p>
       <div class="picks">
         <input id="impPhoto" class="vh" type="file" accept="image/*"><label for="impPhoto" class="btn ghost pickbtn">Take or choose a photo of a recipe</label>
@@ -4956,6 +4957,9 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   // where server.js also serves the app). Set a full https:// address here if the app is hosted elsewhere.
   const PRICING_SERVER = "";
   let serverState = null; // null = not checked, true/false after a check
+  // True when /api/health says this is a plain static host (the live GitHub Pages site): there is no server for
+  // importing from a link or for sync, so those are not offered. Photo, file and paste import still work.
+  let staticHost = false;
   function serverBase() {
     const adv = String(store.get("server", "") || "").trim().replace(/\/+$/, "");
     if (adv) return adv;
@@ -4966,9 +4970,15 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     if (serverState !== null && !force) return serverState;
     const b = serverBase();
     if (b === null) return (serverState = false);
-    try { const r = await fetch(b + "/api/health", { cache: "no-store" }); const d = r.ok ? await r.json() : {}; serverState = !!(d.ok && d.configured); }
+    let st = false;
+    try { const r = await fetch(b + "/api/health", { cache: "no-store" }); const d = r.ok ? await r.json() : {}; serverState = !!(d.ok && d.configured); st = d.static === true; }
     catch (e) { serverState = false; }
+    if (st !== staticHost) { staticHost = st; showServerFeatures(); }
     return serverState;
+  }
+  function showServerFeatures() {
+    $("#impUrl").closest("label").hidden = staticHost; $("#impFetch").hidden = staticHost; $("#impNoLink").hidden = !staticHost;
+    renderSync();
   }
   function setLiveStatus(t, bad) { const el = $("#liveStatus"); if (!el) return; el.textContent = t; el.className = bad ? "status bad" : "status"; }
   const norm = s => String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -5277,7 +5287,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $("#addConfirm").addEventListener("click", () => { const o = $("#addLoc").selectedOptions[0]; addStore({ chain: $("#addChain").value, locationId: o.value, storeName: o.dataset.name }); });
     $("#addOtherSave").addEventListener("click", () => { const n = $("#addOtherName").value.trim(); if (n) { addStore({ chain: n, locationId: "", storeName: n }); $("#addOtherName").value = ""; } });
     $("#storeSwitch").addEventListener("change", () => { state.active = $("#storeSwitch").value; saveStores(); render(); renderPrices(); });
-    $("#advSave").addEventListener("click", () => { store.set("server", $("#advServer").value.trim()); serverState = null; state.liveBy = {}; autoConnect(); setLiveStatus("Saved."); });
+    $("#advSave").addEventListener("click", () => { store.set("server", $("#advServer").value.trim()); serverState = null; if (staticHost) { staticHost = false; showServerFeatures(); } state.liveBy = {}; autoConnect(); setLiveStatus("Saved."); });
     $("#resetPrices").addEventListener("click", () => { state.overrides = {}; store.set("overrides", {}); render(); renderPrices(); });
     $("#changePick").addEventListener("click", () => openSplash(true));
     $("#cancelPick").addEventListener("click", () => stopPicking(true));
@@ -5621,7 +5631,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   let impSeq = 0;
   function openImport() {
     importDraft = null; impSeq++; dropHeld(); impUndo = null; impLastTyped = null; $("#impUndoRow").hidden = true; $("#impStart").hidden = false; $("#impReview").hidden = true; $("#impStatus").textContent = ""; $("#impUrl").value = "";
-    $("#importSheet").hidden = false; document.body.classList.add("locked"); $("#impUrl").focus();
+    $("#importSheet").hidden = false; document.body.classList.add("locked"); $(staticHost ? "#impCancel" : "#impUrl").focus();
   }
   function closeImport() { $("#importSheet").hidden = true; if ($("#detail").hidden && $("#splash").hidden) document.body.classList.remove("locked"); }
   async function importFromUrl() {
@@ -5877,6 +5887,13 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   const fmtCode = c => c.slice(0, 4) + "-" + c.slice(4, 8) + "-" + c.slice(8);
   function renderSync() {
     const code = store.get("syncCode", ""), el = $("#syncBody"); if (!el) return;
+    $("#syncAbout").hidden = staticHost;
+    if (staticHost) {
+      el.innerHTML = '<p class="hint" id="syncNone">Sync needs the Meal Matters server, which this site doesn\'t have yet. Everything you save stays on this device.</p>'
+        + (code ? '<div class="btns"><button type="button" class="btn ghost" id="syncOff">Turn off on this device</button></div>' : "");
+      if (code) $("#syncOff").addEventListener("click", () => { store.set("syncCode", ""); store.set("syncAt", 0); setSyncStatus("Sync is off on this device. Your data here is unchanged."); renderSync(); });
+      return;
+    }
     el.innerHTML = code
       ? '<p>Sync is on. Your code is <b class="code">' + fmtCode(code) + '</b>. Enter it on your other device.</p><div class="btns"><button type="button" class="btn" id="syncNow">Sync now</button><button type="button" class="btn ghost" id="syncOff">Turn off on this device</button></div>'
       : '<div class="btns"><button type="button" class="btn" id="syncOn">Turn on sync</button></div><label class="f" style="margin-top:10px">Have a code from another device?<input id="syncIn" type="text" autocomplete="off" autocapitalize="characters" placeholder="ABCD-EFGH-JK"></label><p class="hint">Using a code replaces the favorites, plans and settings on this device with the ones from your other device.</p><div class="btns"><button type="button" class="btn ghost" id="syncUse">Use this code</button></div>';
