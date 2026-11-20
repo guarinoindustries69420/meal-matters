@@ -4,6 +4,6 @@ Bundled inside those files (versions checked against npm): regenerator-runtime 0
 tesseract.js-core 7.0.0 (Apache License 2.0) - core/*.wasm.js, core/LICENSE
 @tesseract.js-data/eng 1.0.0 - lang/eng.traineddata.gz (4.0.0_best_int). Data from tesseract-ocr/tessdata_best via naptha/tessdata, both Apache License 2.0: lang/LICENSE and lang/NOTICE.txt. The npm package metadata says MIT but ships no licence text.
 Loaded only when someone reads a photo. Nothing leaves the device.
-tesseract.js-core 7.0.0 engine files (core/) compile in the Tesseract OCR engine (5.1.0 development build), Leptonica, libjpeg 9a, libpng 1.6.38, zlib 1.2.12, libtiff, libwebp, giflib, openlibm and the Emscripten 4.0.15 runtime (with musl libc and LLVM libc++). Their notices: core/THIRD-PARTY-LICENSES.txt.
+tesseract.js-core 7.0.0 engine files (core/) compile in the Tesseract OCR engine (5.1.0 development build), Leptonica, libjpeg 9a, libpng 1.6.38, zlib 1.2.12, libtiff, libwebp, giflib, openlibm and the Emscripten 4.0.15 runtime (with musl libc, LLVM libc++ and compiler-rt). Their notices: core/THIRD-PARTY-LICENSES.txt.
 This software is based in part on the work of the Independent JPEG Group.
 The TIFF reader includes LZW code developed by the University of California, Berkeley.
