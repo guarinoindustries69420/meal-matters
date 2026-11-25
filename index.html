@@ -606,8 +606,8 @@ footer{font-size:.75rem;color:var(--muted);margin:24px 4px}
   <div class="sheet small">
     <h2>Import a recipe</h2>
     <div id="impStart">
-      <label class="f">Recipe web address<input id="impUrl" type="url" placeholder="https://" autocomplete="off" inputmode="url"></label>
-      <div class="btns"><button type="button" class="btn" id="impFetch">Get recipe</button><button type="button" class="btn ghost" id="impCancel">Cancel</button></div>
+      <label class="f" hidden>Recipe web address<input id="impUrl" type="url" placeholder="https://" autocomplete="off" inputmode="url"></label>
+      <div class="btns"><button type="button" class="btn" id="impFetch" hidden>Get recipe</button><button type="button" class="btn ghost" id="impCancel">Cancel</button></div>
       <p class="hint" id="impNoLink" hidden>Importing from a web address needs the Meal Matters server, which this site doesn't have yet. Use a photo, a file, or paste the recipe below.</p>
       <p class="status" id="impStatus" role="status"></p>
       <div class="picks">
@@ -4959,7 +4959,14 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   let serverState = null; // null = not checked, true/false after a check
   // True when /api/health says this is a plain static host (the live GitHub Pages site): there is no server for
   // importing from a link or for sync, so those are not offered. Photo, file and paste import still work.
-  let staticHost = false;
+  // "pending" until the first /api/health answer, then "server" or "static". Link import and sync stay hidden while
+  // pending, so nothing can call a server that isn't there. An unreachable address counts as "server": the calls then
+  // say the server isn't reachable. Opened as a file (no address to ask), there is no server: "static".
+  let serverKind = "pending";
+  const staticHost = () => serverKind === "static";
+  // Background sync (on load, on return to the tab, after a change) waits for that answer and stays quiet on a static
+  // host. The link field and the sync buttons only exist where serverKind is "server", so they need no check of their own.
+  async function serverKnown() { await serverAvailable(); return serverKind === "server"; }
   function serverBase() {
     const adv = String(store.get("server", "") || "").trim().replace(/\/+$/, "");
     if (adv) return adv;
@@ -4969,15 +4976,18 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   async function serverAvailable(force) {
     if (serverState !== null && !force) return serverState;
     const b = serverBase();
-    if (b === null) return (serverState = false);
-    let st = false;
-    try { const r = await fetch(b + "/api/health", { cache: "no-store" }); const d = r.ok ? await r.json() : {}; serverState = !!(d.ok && d.configured); st = d.static === true; }
-    catch (e) { serverState = false; }
-    if (st !== staticHost) { staticHost = st; showServerFeatures(); }
+    let kind = "server";
+    if (b === null) { serverState = false; kind = "static"; }
+    else {
+      try { const r = await fetch(b + "/api/health", { cache: "no-store" }); const d = r.ok ? await r.json() : {}; serverState = !!(d.ok && d.configured); if (d.static === true) kind = "static"; }
+      catch (e) { serverState = false; }
+    }
+    if (kind !== serverKind) { serverKind = kind; showServerFeatures(); }
     return serverState;
   }
   function showServerFeatures() {
-    $("#impUrl").closest("label").hidden = staticHost; $("#impFetch").hidden = staticHost; $("#impNoLink").hidden = !staticHost;
+    const link = serverKind === "server";
+    $("#impUrl").closest("label").hidden = !link; $("#impFetch").hidden = !link; $("#impNoLink").hidden = !staticHost();
     renderSync();
   }
   function setLiveStatus(t, bad) { const el = $("#liveStatus"); if (!el) return; el.textContent = t; el.className = bad ? "status bad" : "status"; }
@@ -5287,7 +5297,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     $("#addConfirm").addEventListener("click", () => { const o = $("#addLoc").selectedOptions[0]; addStore({ chain: $("#addChain").value, locationId: o.value, storeName: o.dataset.name }); });
     $("#addOtherSave").addEventListener("click", () => { const n = $("#addOtherName").value.trim(); if (n) { addStore({ chain: n, locationId: "", storeName: n }); $("#addOtherName").value = ""; } });
     $("#storeSwitch").addEventListener("change", () => { state.active = $("#storeSwitch").value; saveStores(); render(); renderPrices(); });
-    $("#advSave").addEventListener("click", () => { store.set("server", $("#advServer").value.trim()); serverState = null; if (staticHost) { staticHost = false; showServerFeatures(); } state.liveBy = {}; autoConnect(); setLiveStatus("Saved."); });
+    $("#advSave").addEventListener("click", () => { store.set("server", $("#advServer").value.trim()); serverState = null; serverKind = "pending"; showServerFeatures(); state.liveBy = {}; autoConnect(); setLiveStatus("Saved."); });
     $("#resetPrices").addEventListener("click", () => { state.overrides = {}; store.set("overrides", {}); render(); renderPrices(); });
     $("#changePick").addEventListener("click", () => openSplash(true));
     $("#cancelPick").addEventListener("click", () => stopPicking(true));
@@ -5631,7 +5641,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   let impSeq = 0;
   function openImport() {
     importDraft = null; impSeq++; dropHeld(); impUndo = null; impLastTyped = null; $("#impUndoRow").hidden = true; $("#impStart").hidden = false; $("#impReview").hidden = true; $("#impStatus").textContent = ""; $("#impUrl").value = "";
-    $("#importSheet").hidden = false; document.body.classList.add("locked"); $(staticHost ? "#impCancel" : "#impUrl").focus();
+    $("#importSheet").hidden = false; document.body.classList.add("locked"); $(serverKind === "server" ? "#impUrl" : "#impCancel").focus();
   }
   function closeImport() { $("#importSheet").hidden = true; if ($("#detail").hidden && $("#splash").hidden) document.body.classList.remove("locked"); }
   async function importFromUrl() {
@@ -5857,7 +5867,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   }
   function setSyncStatus(t, bad) { const el = $("#syncStatus"); if (el) { el.textContent = t; el.className = bad ? "status bad" : "status"; } }
   async function syncPush() {
-    const code = store.get("syncCode", ""); if (!code) return;
+    const code = store.get("syncCode", ""); if (!code || !(await serverKnown())) return;
     try { const d = await syncCall("PUT", code, { data: syncData() }); store.set("syncAt", d.updatedAt); setSyncStatus("Synced " + new Date(d.updatedAt).toLocaleTimeString() + "."); }
     catch (e) { setSyncStatus(/fetch/i.test(e.message) ? "Couldn't reach the sync server. Your changes are kept here and will sync next time." : e.message, true); }
   }
@@ -5877,7 +5887,7 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
     renderPantry(); render(); renderGoal(); renderNutrition(); renderSync(); autoConnect();
   }
   async function syncPull(quiet) {
-    const code = store.get("syncCode", ""); if (!code) return;
+    const code = store.get("syncCode", ""); if (!code || !(await serverKnown())) return;
     try {
       const d = await syncCall("GET", code);
       if (d.updatedAt > store.get("syncAt", 0)) { applySync(d.data || {}); store.set("syncAt", d.updatedAt); }
@@ -5887,8 +5897,9 @@ globalThis.MEAL_PHOTOS = {"air-fryer-chicken-sweet-potato": "data:image/webp;bas
   const fmtCode = c => c.slice(0, 4) + "-" + c.slice(4, 8) + "-" + c.slice(8);
   function renderSync() {
     const code = store.get("syncCode", ""), el = $("#syncBody"); if (!el) return;
-    $("#syncAbout").hidden = staticHost;
-    if (staticHost) {
+    $("#syncAbout").hidden = staticHost();
+    if (serverKind === "pending" && !code) { el.innerHTML = '<p class="hint" id="syncWait">Checking for the sync server…</p>'; return; }
+    if (staticHost()) {
       el.innerHTML = '<p class="hint" id="syncNone">Sync needs the Meal Matters server, which this site doesn\'t have yet. Everything you save stays on this device.</p>'
         + (code ? '<div class="btns"><button type="button" class="btn ghost" id="syncOff">Turn off on this device</button></div>' : "");
       if (code) $("#syncOff").addEventListener("click", () => { store.set("syncCode", ""); store.set("syncAt", 0); setSyncStatus("Sync is off on this device. Your data here is unchanged."); renderSync(); });
